@@ -145,23 +145,6 @@ def health_potion(user, target):
     user.heal(heal_amount)
     return f"{user.name} uses a Health Potion and restores {heal_amount} HP!"
 
-def choose_ability(character, target):
-    print(f"\n{character.name}'s turn!")
-    print(f"Health: {character.health}/{character.max_health}")
-    print("Abilities:")
-    for idx, ability in enumerate(character.abilities):
-        print(f"{idx}: {ability.name} - {ability.description}")
-    while True:
-        try:
-            choice = int(input("Choose ability number for {character.name}: "))
-            if 0 <= choice < len(character.abilities):
-                print()
-                return character.use_ability(choice, target)
-            else:
-                print("Invalid choice. Try again.")
-        except ValueError:
-            print("Please enter a valid number.")
-
 # --- Create Characters and Add Abilities ---
 def create_warrior():
     w = GameCharacter("Duncan", 120)
@@ -175,54 +158,3 @@ def create_mage():
     m.add_ability(Ability("Heal", heal_spell, "Restore health to yourself."))
     m.add_ability(Ability("Health Potion", health_potion, "Restore health by 30 HP. "))
     return m
-
-# Character selection
-characters = {
-    "warrior": create_warrior,
-    "mage": create_mage
-}
-
-def select_character(player_num, taken=None):
-    print(f"\nPlayer {player_num}, choose your character:")
-    options = [name for name in characters if name != taken]
-    for idx, name in enumerate(options):
-        print(f"{idx}: {name.capitalize()}")
-    while True:
-        try:
-            choice = int(input("Enter the number of your choice: "))
-            if 0 <= choice < len(options):
-                chosen = options[choice]
-                char = characters[chosen]()
-                custom_name = input(f"Enter a custom name for your {chosen.capitalize()} (or press Enter to use default): ").strip()
-                if custom_name:
-                    char.name = custom_name
-                else:
-                    char.name = chosen.capitalize()
-                print(f"Player {player_num} chose {char.name} the {chosen.capitalize()}!\n")
-                return char, chosen
-            else:
-                print("Invalid choice. Try again.")
-        except ValueError:
-            print("Please enter a valid number.")
-            
-player1, chosen1 = select_character(1)
-player2, chosen2 = select_character(2, taken=chosen1)
-
-# --- Battle Loop ---
-print("Battle begins!")
-turn = 0
-while player1.is_alive() and player2.is_alive():
-    print(f"--- Turn {turn+1} ---")
-    # Each character processes their status effects at the start of their turn
-    for char in [player1, player2]:
-        for msg in char.process_status_effects():
-            print(msg)
-    if player1.is_alive():
-        print(choose_ability(player1, player2))
-    if player2.is_alive():
-        print(choose_ability(player2, player1))
-    print(f"{player1.name}: {player1.health} HP, {player2.name}: {player2.health} HP\n")
-    input("Press Enter to continue...")
-    turn += 1
-winner = player1 if player1.is_alive() else player2
-print(f"Battle ended! {winner.name} the {chosen1 if winner == player1 else chosen2} wins!")
