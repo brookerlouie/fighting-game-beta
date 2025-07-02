@@ -1,3 +1,6 @@
+# LEGACY FILE: See terminal_game/settings.py and terminal_game/main.py for the current text-based game logic.
+# This file is no longer used in the refactored project structure.
+
 # settings.py
 # Game configuration and settings
 
@@ -14,3 +17,8 @@ HEAL_AMOUNT = 25
 
 WIDTH = 800
 HEIGHT = 600
+
+PLAYER_SPEED = 5
+PLAYER_SIZE = 50
+BACKGROUND_COLOR = (30, 30, 30)
+FPS = 60

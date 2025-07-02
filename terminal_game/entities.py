@@ -1,6 +1,10 @@
+# LEGACY FILE: See terminal_game/entities.py and terminal_game/main.py for the current text-based game logic.
+# This file is no longer used in the refactored project structure.
+
 # entities.py
 # Define your game entities here (Player, Enemy, etc.)
 import random
+from re import X
 
 # --- Ability System ---
 class Ability:
@@ -39,13 +43,15 @@ class StatusEffect:
 
 # --- Character Classes ---
 class GameCharacter:
-    def __init__(self, name, health=100):
+    def __init__(self, name, health=100, x=0, y=0):
         self.name = name
         self.health = health
         self.max_health = health
         self.abilities = []
         self.status_effects = []  # List of (StatusEffect, turns_left)
         self.stunned = False
+        self.x = x
+        self.y = y
 
     def take_damage(self, amount):
         self.health = max(0, self.health - amount)
@@ -147,7 +153,7 @@ def choose_ability(character, target):
         print(f"{idx}: {ability.name} - {ability.description}")
     while True:
         try:
-            choice = int(input("Choose ability number: "))
+            choice = int(input("Choose ability number for {character.name}: "))
             if 0 <= choice < len(character.abilities):
                 print()
                 return character.use_ability(choice, target)
@@ -187,19 +193,18 @@ def select_character(player_num, taken=None):
             if 0 <= choice < len(options):
                 chosen = options[choice]
                 char = characters[chosen]()
-                custom_name = input(f"Enter a custom name for your {chosen.capitalize()}: ").strip()
+                custom_name = input(f"Enter a custom name for your {chosen.capitalize()} (or press Enter to use default): ").strip()
                 if custom_name:
                     char.name = custom_name
+                else:
+                    char.name = chosen.capitalize()
                 print(f"Player {player_num} chose {char.name} the {chosen.capitalize()}!\n")
                 return char, chosen
             else:
                 print("Invalid choice. Try again.")
         except ValueError:
             print("Please enter a valid number.")
-
-
-
-
+            
 player1, chosen1 = select_character(1)
 player2, chosen2 = select_character(2, taken=chosen1)
 

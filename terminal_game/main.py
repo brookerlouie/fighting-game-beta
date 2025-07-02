@@ -1,3 +1,5 @@
+# LEGACY FILE: The main pygame game is now in pygame_game/main.py. This file is no longer used in the refactored project structure.
+
 # main.py
 # Entry point for your game
 
@@ -6,8 +8,8 @@
 
 import pygame
 import sys
-from game.settings import WIDTH, HEIGHT
-from game.entities import create_warrior, create_mage
+from settings import WIDTH, HEIGHT
+from entities import create_warrior, create_mage
 
 pygame.init()
 # Get the user's current screen size for fullscreen
