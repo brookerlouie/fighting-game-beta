@@ -55,6 +55,7 @@ class GameCharacter:
         self.x = x
         self.y = y
         self.blocking = False
+        self.extra_turn = False  # Used for abilities that grant extra turns
 
     def take_damage(self, amount):
         if self.blocking:
@@ -185,6 +186,50 @@ def health_potion(user, target):
     user.heal(heal_amount)
     return f"{user.name} uses a Health Potion and restores {heal_amount} HP!"
 
+def slash_attack(user, target):
+    if hasattr(target, 'blocking') and target.blocking:
+        target.blocking = False
+        return f"{target.name} blocks the move!"
+    damage = 15 + random.randint(5, 15)
+    block_msg = target.take_damage(damage)
+    if block_msg:
+        return f"{user.name} uses Slash!\n{block_msg}"
+    msg = f"{user.name} uses Slash! {target.name} takes {damage} damage."
+    # 30% chance to bleed
+    if random.random() < 0.3:
+        bleed_effect = StatusEffect(
+            name="Bleeding",
+            duration=5,
+            on_apply=None,
+            on_turn=lambda c: c.take_damage(1),
+            on_expire=None
+        )
+        msg += f"\n{target.add_status_effect(bleed_effect)}"
+    return msg
+
+def confusion(user, target):
+    if hasattr(target, 'blocking') and target.blocking:
+        target.blocking = False
+        return f"{target.name} blocks the move!"
+    damage = 10
+    block_msg = target.take_damage(damage)
+    if block_msg:
+        return f"{user.name} uses Confusion!\n{block_msg}"
+    msg = f"{user.name} uses Confusion! {target.name} takes {damage} damage."
+    # 30% chance for extra turn
+    if random.random() < 0.3:
+        user.stunned = False  # Ensure not stunned
+        msg += f"\n{user.name} is empowered by confusion and gets another turn!"
+        user.extra_turn = True
+    else:
+        user.extra_turn = False
+    return msg
+
+def souls(user, target):
+    heal_amount = 30
+    user.heal(heal_amount)
+    return f"{user.name} uses Souls! {user.name} steals the enemy's soul and heals for {heal_amount} HP!"
+
 # --- Create Characters and Add Abilities ---
 def create_warrior():
     w = GameCharacter("Duncan", 120)
@@ -201,6 +246,15 @@ def create_mage():
     m.add_ability(Ability("Heal", heal_spell, "Restore health to yourself."))
     m.add_ability(Ability("Health Potion", health_potion, "Restore health by 30 HP. "))
     return m
+
+def create_ghost():
+    g = GameCharacter("Ghost", 100)
+    g.add_ability(Ability("Light Attack", light_attack, "A quick, reliable attack", is_damage=True))
+    g.add_ability(Ability("Slash", slash_attack, "A powerful slash with a chance to cause bleeding.", is_damage=True))
+    g.add_ability(Ability("Confusion", confusion, "A confusing attack that may grant another turn."))
+    g.add_ability(Ability("Souls", souls, "Steal the enemy's soul and heal yourself."))
+    g.extra_turn = False  # Used for Confusion ability
+    return g
 
 def draw_health_bar(screen, x, y, current_health, max_health, width=200, height=20):
     # Implementation of draw_health_bar function

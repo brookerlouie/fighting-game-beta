@@ -10,7 +10,8 @@ import pygame
 import sys
 import math
 from pygame_game.settings import WIDTH, HEIGHT
-from pygame_game.entities import create_warrior, create_mage
+from pygame_game.entities import create_warrior, create_mage, create_ghost
+from PIL import Image
 
 def is_in_range(player1, player2, max_distance):
     dx = player1.x - player2.x
@@ -55,8 +56,24 @@ except Exception as e:
     print("Trying fallback background...")
     background = None
     
-# Load and scale player images (optional) using absolute paths
+# Utility to load animated GIF frames as pygame surfaces
+def load_gif_frames(path, size):
+    frames = []
+    try:
+        img = Image.open(path)
+        n_frames = getattr(img, 'n_frames', 1)
+        for frame in range(n_frames):
+            img.seek(frame)
+            frame_img = img.convert('RGBA').resize(size, Image.Resampling.LANCZOS)
+            data = frame_img.tobytes()
+            surface = pygame.image.fromstring(data, frame_img.size, 'RGBA')
+            frames.append(surface)
+    except Exception as e:
+        print(f"Failed to load GIF {path}: {e}")
+    return frames
+
 CHAR_SIZE = 500  # Set this at the top
+# Load and scale player images (optional) using absolute paths
 try:
     warrior_img = pygame.image.load(r"C:\Users\brook\OneDrive\Desktop\code\Game\pygame_game\assets\tommy-warrior.png")
     warrior_img = pygame.transform.scale(warrior_img, (CHAR_SIZE, CHAR_SIZE))
@@ -64,14 +81,23 @@ except Exception as e:
     print("Failed to load warrior image:", e)
     warrior_img = None
 try:
-    mage_img = pygame.image.load(r"C:\Users\brook\OneDrive\Desktop\code\Game\pygame_game\assets\tommy-mage.png")
-    mage_img = pygame.transform.scale(mage_img, (CHAR_SIZE, CHAR_SIZE))
+    mage_gif_frames = load_gif_frames(r"C:\Users\brook\OneDrive\Desktop\code\Game\pygame_game\assets\Mage-idle.gif", (CHAR_SIZE, CHAR_SIZE))
+    mage_img = mage_gif_frames[0] if mage_gif_frames else None
 except Exception as e:
-    print("Failed to load mage image:", e)
+    print("Failed to load mage gif:", e)
+    mage_gif_frames = []
     mage_img = None
+try:
+    ghost_gif_frames = load_gif_frames(r"C:\Users\brook\OneDrive\Desktop\code\Game\pygame_game\assets\Ghost-idle.gif", (CHAR_SIZE, CHAR_SIZE))
+    ghost_img = ghost_gif_frames[0] if ghost_gif_frames else None
+except Exception as e:
+    print("Failed to load ghost gif:", e)
+    ghost_gif_frames = []
+    ghost_img = None
 
 font = pygame.font.SysFont(None, 64)
 small_font = pygame.font.SysFont(None, 36)
+name_font = pygame.font.SysFont(None, 48)
 
 def draw_health_bar(surface, x, y, current_health, max_health, width=50, height=8):
     pygame.draw.rect(surface, (60, 60, 60), (x, y, width, height))
@@ -86,12 +112,25 @@ ability_y = HEIGHT - 120
 # Add turn variable for turn-based gameplay
 turn = 1  # 1 for Player 1, 2 for Player 2
 
+# Define ability keys by player number
+player1_keys = ["Q", "W", "E", "R"]
+player2_keys = ["U", "I", "O", "P"]
+
 # Add game over state
 game_over = False
 winner = None
 
+# Animation state
+mage_anim_index = 0
+mage_anim_timer = 0
+mage_anim_speed = 6  # frames per second
+
+ghost_anim_index = 0
+ghost_anim_timer = 0
+ghost_anim_speed = 6  # frames per second
+
 def character_selection(player_num, available_classes=None):
-    classes = available_classes if available_classes else ["Warrior", "Mage"]
+    classes = available_classes if available_classes else ["Warrior", "Mage", "Ghost"]
     selected = 0
     name = ""
     input_active = False
@@ -126,7 +165,7 @@ def character_selection(player_num, available_classes=None):
         title = font.render(f"Player {player_num}: Choose your class", True, (255, 255, 255))
         screen.blit(title, (WIDTH // 2 - title.get_width() // 2, 100))
 
-        positions = [WIDTH // 3, 2 * WIDTH // 3]
+        positions = [int((WIDTH * (j + 1)) / (len(classes) + 1)) for j in range(len(classes))]
         for i, cls in enumerate(classes):
             x_pos = positions[i]
             color = (255, 255, 0) if i == selected else (200, 200, 200)
@@ -134,8 +173,10 @@ def character_selection(player_num, available_classes=None):
             screen.blit(txt, (x_pos - txt.get_width() // 2, 200))
             if cls == "Warrior" and "warrior_img" in globals() and warrior_img:
                 screen.blit(warrior_img, (x_pos - warrior_img.get_width() // 2, 260))
-            elif cls == "Mage" and "mage_img" in globals() and mage_img:
-                screen.blit(mage_img, (x_pos - mage_img.get_width() // 2, 260))
+            elif cls == "Mage" and mage_gif_frames:
+                screen.blit(mage_gif_frames[mage_anim_index], (x_pos - mage_gif_frames[0].get_width() // 2, 260))
+            elif cls == "Ghost" and ghost_gif_frames:
+                screen.blit(ghost_gif_frames[ghost_anim_index], (x_pos - ghost_gif_frames[0].get_width() // 2, 260))
 
         if input_active:
             prompt_y = 260 + (warrior_img.get_height() if warrior_img else 150) + 20
@@ -151,7 +192,7 @@ def character_selection(player_num, available_classes=None):
 
 # --- Character selection for both players ---
 player1_class, player1_name = character_selection(1)
-remaining_classes = [cls for cls in ["Warrior", "Mage"] if cls.lower() != player1_class.lower()]
+remaining_classes = [cls for cls in ["Warrior", "Mage", "Ghost"] if cls.lower() != player1_class.lower()]
 player2_class, player2_name = character_selection(2, available_classes=remaining_classes)
 
 OFFSET_Y = -40  # Negative value moves characters up
@@ -159,16 +200,20 @@ OFFSET_Y = -40  # Negative value moves characters up
 # --- Create players based on selection ---
 if player1_class == "warrior":
     player1 = create_warrior()
-else:
+elif player1_class == "mage":
     player1 = create_mage()
+else:
+    player1 = create_ghost()
 player1.name = player1_name
 player1.x = WIDTH // 4 - CHAR_SIZE // 2
 player1.y = HEIGHT // 2 - CHAR_SIZE // 2 + OFFSET_Y
 
 if player2_class == "warrior":
     player2 = create_warrior()
-else:
+elif player2_class == "mage":
     player2 = create_mage()
+else:
+    player2 = create_ghost()
 player2.name = player2_name
 player2.x = 3 * WIDTH // 4 - CHAR_SIZE // 2
 player2.y = HEIGHT // 2 - CHAR_SIZE // 2 + OFFSET_Y
@@ -178,6 +223,7 @@ message_timer = 0
 
 running = True
 while running:
+    dt = clock.tick(30)  # milliseconds since last frame
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -200,10 +246,18 @@ while running:
                         message_timer = 120
                         turn = 2  # Switch to Player 2's turn
                     if event.key == pygame.K_e:
-                        result = player1.use_ability(2, player1)
+                        # For Ghost, Confusion targets enemy; for others, ability targets self
+                        if player1_class == "ghost":
+                            result = player1.use_ability(2, player2)
+                        else:
+                            result = player1.use_ability(2, player1)
                         ability_message = result
                         message_timer = 120
-                        turn = 2  # Switch to Player 2's turn
+                        # Only switch turns if player doesn't get an extra turn
+                        if not player1.extra_turn:
+                            turn = 2  # Switch to Player 2's turn
+                        else:
+                            player1.extra_turn = False  # Reset the flag
                     if event.key == pygame.K_r:
                         print(f"R key pressed! Player 1 has {len(player1.abilities)} abilities")
                         print(f"Trying to use ability index 3...")
@@ -226,10 +280,18 @@ while running:
                         message_timer = 120
                         turn = 1  # Switch to Player 1's turn
                     if event.key == pygame.K_o:
-                        result = player2.use_ability(2, player2)
+                        # For Ghost, Confusion targets enemy; for others, ability targets self
+                        if player2_class == "ghost":
+                            result = player2.use_ability(2, player1)
+                        else:
+                            result = player2.use_ability(2, player2)
                         ability_message = result
                         message_timer = 120
-                        turn = 1  # Switch to Player 1's turn
+                        # Only switch turns if player doesn't get an extra turn
+                        if not player2.extra_turn:
+                            turn = 1  # Switch to Player 1's turn
+                        else:
+                            player2.extra_turn = False  # Reset the flag
                     if event.key == pygame.K_p:
                         result = player2.use_ability(3, player2)
                         ability_message = result
@@ -255,97 +317,99 @@ while running:
         # Fallback: solid color background
         screen.fill((30, 30, 30))
 
-    # --- Draw Warrior and Mage name and health bar at top left and top right ---
-    if player1_class == "warrior":
-        warrior = player1
-        warrior_name = player1.name
-        warrior_health = player1.health
-        warrior_max_health = player1.max_health
-        mage = player2
-        mage_name = player2.name
-        mage_health = player2.health
-        mage_max_health = player2.max_health
-    else:
-        warrior = player2
-        warrior_name = player2.name
-        warrior_health = player2.health
-        warrior_max_health = player2.max_health
-        mage = player1
-        mage_name = player1.name
-        mage_health = player1.health
-        mage_max_health = player1.max_health
+    # --- Dynamic UI: Health bar, name, and abilities on the same side as the character ---
 
-    name_font = pygame.font.SysFont(None, 48)
-    # Warrior top left
-    name_surface = name_font.render(warrior_name, True, (255, 255, 0))
-    screen.blit(name_surface, (20, 20))
-    # Even bigger health bar
-    bar_x, bar_y, bar_w, bar_h = 20, 70, 400, 40
-    draw_health_bar(screen, bar_x, bar_y, warrior_health, warrior_max_health, width=bar_w, height=bar_h)
-    health_text = f"{warrior_health} / {warrior_max_health}"
-    health_surface = name_font.render(health_text, True, (255, 255, 255))
-    screen.blit(health_surface, (bar_x + bar_w // 2 - health_surface.get_width() // 2, bar_y + bar_h // 2 - health_surface.get_height() // 2))
-    # Mage top right
-    name_surface = name_font.render(mage_name, True, (0, 255, 255))
-    screen.blit(name_surface, (WIDTH - name_surface.get_width() - 20, 20))
-    bar_x, bar_y, bar_w, bar_h = WIDTH - 420, 70, 400, 40
-    draw_health_bar(screen, bar_x, bar_y, mage_health, mage_max_health, width=bar_w, height=bar_h)
-    health_text = f"{mage_health} / {mage_max_health}"
-    health_surface = name_font.render(health_text, True, (255, 255, 255))
-    screen.blit(health_surface, (bar_x + bar_w // 2 - health_surface.get_width() // 2, bar_y + bar_h // 2 - health_surface.get_height() // 2))
+    # Helper to determine left/right
+    def is_left(player):
+        return player.x < WIDTH // 2
+
+    # --- UI for Player 1 ---
+    if is_left(player1):
+        # Top left
+        name_surface = name_font.render(player1.name, True, (255, 255, 0) if player1_class == "warrior" else (0, 255, 255))
+        screen.blit(name_surface, (20, 20))
+        bar_x, bar_y, bar_w, bar_h = 20, 70, 400, 40
+        draw_health_bar(screen, bar_x, bar_y, player1.health, player1.max_health, width=bar_w, height=bar_h)
+        health_text = f"{player1.health} / {player1.max_health}"
+        health_surface = name_font.render(health_text, True, (255, 255, 255))
+        screen.blit(health_surface, (bar_x + bar_w // 2 - health_surface.get_width() // 2, bar_y + bar_h // 2 - health_surface.get_height() // 2))
+        # Abilities bottom left
+        for i, ability in enumerate(player1.abilities):
+            key = player1_keys[i]
+            text = f"{key}: {ability.name}"
+            color = (255, 255, 0) if (player1_class == "warrior" and turn == 1) or (player1_class == "mage" and turn == 1) else (180, 180, 180)
+            surf = ability_font.render(text, True, color)
+            screen.blit(surf, (padding, ability_y + i * 32))
+    else:
+        # Top right
+        name_surface = name_font.render(player1.name, True, (255, 255, 0) if player1_class == "warrior" else (0, 255, 255))
+        screen.blit(name_surface, (WIDTH - name_surface.get_width() - 20, 20))
+        bar_x, bar_y, bar_w, bar_h = WIDTH - 420, 70, 400, 40
+        draw_health_bar(screen, bar_x, bar_y, player1.health, player1.max_health, width=bar_w, height=bar_h)
+        health_text = f"{player1.health} / {player1.max_health}"
+        health_surface = name_font.render(health_text, True, (255, 255, 255))
+        screen.blit(health_surface, (bar_x + bar_w // 2 - health_surface.get_width() // 2, bar_y + bar_h // 2 - health_surface.get_height() // 2))
+        # Abilities bottom right
+        for i, ability in enumerate(player1.abilities):
+            key = player1_keys[i]
+            text = f"{key}: {ability.name}"
+            color = (255, 255, 0) if (player1_class == "warrior" and turn == 1) or (player1_class == "mage" and turn == 1) else (180, 180, 180)
+            surf = ability_font.render(text, True, color)
+            screen.blit(surf, (WIDTH - surf.get_width() - padding, ability_y + i * 32))
+
+    # --- UI for Player 2 ---
+    if is_left(player2):
+        # Top left
+        name_surface = name_font.render(player2.name, True, (255, 255, 0) if player2_class == "warrior" else (0, 255, 255))
+        screen.blit(name_surface, (20, 20))
+        bar_x, bar_y, bar_w, bar_h = 20, 70, 400, 40
+        draw_health_bar(screen, bar_x, bar_y, player2.health, player2.max_health, width=bar_w, height=bar_h)
+        health_text = f"{player2.health} / {player2.max_health}"
+        health_surface = name_font.render(health_text, True, (255, 255, 255))
+        screen.blit(health_surface, (bar_x + bar_w // 2 - health_surface.get_width() // 2, bar_y + bar_h // 2 - health_surface.get_height() // 2))
+        # Abilities bottom left
+        for i, ability in enumerate(player2.abilities):
+            key = player2_keys[i]
+            text = f"{key}: {ability.name}"
+            color = (255, 255, 0) if (player2_class == "warrior" and turn == 2) or (player2_class == "mage" and turn == 2) else (180, 180, 180)
+            surf = ability_font.render(text, True, color)
+            screen.blit(surf, (padding, ability_y + i * 32))
+    else:
+        # Top right
+        name_surface = name_font.render(player2.name, True, (255, 255, 0) if player2_class == "warrior" else (0, 255, 255))
+        screen.blit(name_surface, (WIDTH - name_surface.get_width() - 20, 20))
+        bar_x, bar_y, bar_w, bar_h = WIDTH - 420, 70, 400, 40
+        draw_health_bar(screen, bar_x, bar_y, player2.health, player2.max_health, width=bar_w, height=bar_h)
+        health_text = f"{player2.health} / {player2.max_health}"
+        health_surface = name_font.render(health_text, True, (255, 255, 255))
+        screen.blit(health_surface, (bar_x + bar_w // 2 - health_surface.get_width() // 2, bar_y + bar_h // 2 - health_surface.get_height() // 2))
+        # Abilities bottom right
+        for i, ability in enumerate(player2.abilities):
+            key = player2_keys[i]
+            text = f"{key}: {ability.name}"
+            color = (255, 255, 0) if (player2_class == "warrior" and turn == 2) or (player2_class == "mage" and turn == 2) else (180, 180, 180)
+            surf = ability_font.render(text, True, color)
+            screen.blit(surf, (WIDTH - surf.get_width() - padding, ability_y + i * 32))
 
     # Draw player 1
     if player1_class == "warrior" and warrior_img:
         screen.blit(warrior_img, (player1.x, player1.y))
-    elif player1_class == "mage" and mage_img:
-        screen.blit(mage_img, (player1.x, player1.y))
+    elif player1_class == "mage" and mage_gif_frames:
+        screen.blit(mage_gif_frames[mage_anim_index], (player1.x, player1.y))
+    elif player1_class == "ghost" and ghost_gif_frames:
+        screen.blit(ghost_gif_frames[ghost_anim_index], (player1.x, player1.y))
     else:
         pygame.draw.rect(screen, (255, 0, 0), (player1.x, player1.y, CHAR_SIZE, CHAR_SIZE))
 
     # Draw player 2
     if player2_class == "warrior" and warrior_img:
         screen.blit(warrior_img, (player2.x, player2.y))
-    elif player2_class == "mage" and mage_img:
-        screen.blit(mage_img, (player2.x, player2.y))
+    elif player2_class == "mage" and mage_gif_frames:
+        screen.blit(mage_gif_frames[mage_anim_index], (player2.x, player2.y))
+    elif player2_class == "ghost" and ghost_gif_frames:
+        screen.blit(ghost_gif_frames[ghost_anim_index], (player2.x, player2.y))
     else:
         pygame.draw.rect(screen, (0, 0, 255), (player2.x, player2.y, CHAR_SIZE, CHAR_SIZE))
-
-    # --- Draw Abilities for Warrior (bottom left) and Mage (bottom right) ---
-    ability_font = pygame.font.SysFont(None, 32)
-    padding = 10
-    ability_y = HEIGHT - 120  # Adjust as needed
-
-    # Determine which player is the warrior and which is the mage
-    if player1_class == "warrior":
-        warrior = player1
-        warrior_turn = (turn == 1)
-        warrior_keys = ["Q", "W", "E", "R"]
-        mage = player2
-        mage_turn = (turn == 2)
-        mage_keys = ["U", "I", "O", "P"]
-    else:
-        warrior = player2
-        warrior_turn = (turn == 2)
-        warrior_keys = ["Q", "W", "E", "R"]
-        mage = player1
-        mage_turn = (turn == 1)
-        mage_keys = ["U", "I", "O", "P"]
-
-    # Draw Warrior abilities (bottom left)
-    for i, ability in enumerate(warrior.abilities):
-        key = warrior_keys[i]
-        text = f"{key}: {ability.name}"
-        color = (255, 255, 0) if warrior_turn else (180, 180, 180)
-        surf = ability_font.render(text, True, color)
-        screen.blit(surf, (padding, ability_y + i * 32))
-
-    # Draw Mage abilities (bottom right)
-    for i, ability in enumerate(mage.abilities):
-        key = mage_keys[i]
-        text = f"{key}: {ability.name}"
-        color = (0, 255, 255) if mage_turn else (180, 180, 180)
-        surf = ability_font.render(text, True, color)
-        screen.blit(surf, (WIDTH - surf.get_width() - padding, ability_y + i * 32))
 
     # Display game state
     if game_over and winner:
@@ -359,15 +423,19 @@ while running:
         if winner == player1:
             if player1_class == "warrior" and warrior_img:
                 winner_img = warrior_img
-            elif player1_class == "mage" and mage_img:
-                winner_img = mage_img
+            elif player1_class == "mage" and mage_gif_frames:
+                winner_img = mage_gif_frames[mage_anim_index]
+            elif player1_class == "ghost" and ghost_gif_frames:
+                winner_img = ghost_gif_frames[ghost_anim_index]
             else:
                 winner_img = None
         else:  # winner == player2
             if player2_class == "warrior" and warrior_img:
                 winner_img = warrior_img
-            elif player2_class == "mage" and mage_img:
-                winner_img = mage_img
+            elif player2_class == "mage" and mage_gif_frames:
+                winner_img = mage_gif_frames[mage_anim_index]
+            elif player2_class == "ghost" and ghost_gif_frames:
+                winner_img = ghost_gif_frames[ghost_anim_index]
             else:
                 winner_img = None
         
@@ -409,8 +477,19 @@ while running:
     else:
         ability_message = ""
 
+    # Update animation timers
+    if mage_gif_frames:
+        mage_anim_timer += dt
+        if mage_anim_timer > 1000 // mage_anim_speed:
+            mage_anim_index = (mage_anim_index + 1) % len(mage_gif_frames)
+            mage_anim_timer = 0
+    if ghost_gif_frames:
+        ghost_anim_timer += dt
+        if ghost_anim_timer > 1000 // ghost_anim_speed:
+            ghost_anim_index = (ghost_anim_index + 1) % len(ghost_gif_frames)
+            ghost_anim_timer = 0
+
     pygame.display.flip()
-    clock.tick(60)
 
 pygame.quit()
 sys.exit()
