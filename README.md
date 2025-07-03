@@ -80,4 +80,12 @@ Game/
 
 ---
 
+## Creators
+
+**Coder:** Louie Brooker  
+Business email: brookerlouie7@gmail.com
+
+**Artist:** Tommy Batchelor  
+Business email: tommybatchelor986@gmail.com
+
 Enjoy your turn-based battle! If you have issues, check the troubleshooting section or ask for help. 

@@ -110,6 +110,9 @@ class GameCharacter:
 
 # --- Ability Functions ---
 def light_attack(user, target):
+    if hasattr(target, 'blocking') and target.blocking:
+        target.blocking = False
+        return f"{target.name} blocks the move!"
     damage = 8 + random.randint(2, 6)
     block_msg = target.take_damage(damage)
     if block_msg:
@@ -119,6 +122,9 @@ def light_attack(user, target):
 
 
 def heavy_strike(user, target):
+    if hasattr(target, 'blocking') and target.blocking:
+        target.blocking = False
+        return f"{target.name} blocks the move!"
     damage = 15 + random.randint(5, 15)
     block_msg = target.take_damage(damage)
     if block_msg:
@@ -137,10 +143,15 @@ def heavy_strike(user, target):
     return msg
 
 def block_ability(user, target):
+    if user.blocking:
+        return f"{user.name} is already ready to block the next attack!"
     user.blocking = True
     return f"{user.name} is ready to block the next attack!"
 
 def fireball(user, target):
+    if hasattr(target, 'blocking') and target.blocking:
+        target.blocking = False
+        return f"{target.name} blocks the move!"
     damage = 20 + random.randint(10, 20)
     block_msg = target.take_damage(damage)
     if block_msg:
@@ -159,11 +170,17 @@ def fireball(user, target):
     return msg
 
 def heal_spell(user, target):
+    if hasattr(target, 'blocking') and target.blocking:
+        target.blocking = False
+        return f"{target.name} blocks the move!"
     heal_amount = 25
     user.heal(heal_amount)
     return f"{user.name} casts Heal and restores {heal_amount} HP!"
 
 def health_potion(user, target):
+    if hasattr(target, 'blocking') and target.blocking:
+        target.blocking = False
+        return f"{target.name} blocks the move!"
     heal_amount = 30
     user.heal(heal_amount)
     return f"{user.name} uses a Health Potion and restores {heal_amount} HP!"

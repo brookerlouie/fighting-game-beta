@@ -58,13 +58,13 @@ except Exception as e:
 # Load and scale player images (optional) using absolute paths
 CHAR_SIZE = 500  # Set this at the top
 try:
-    warrior_img = pygame.image.load(r"C:\Users\brook\OneDrive\Desktop\code\Game\pygame_game\assets\warrior.png")
+    warrior_img = pygame.image.load(r"C:\Users\brook\OneDrive\Desktop\code\Game\pygame_game\assets\tommy-warrior.png")
     warrior_img = pygame.transform.scale(warrior_img, (CHAR_SIZE, CHAR_SIZE))
 except Exception as e:
     print("Failed to load warrior image:", e)
     warrior_img = None
 try:
-    mage_img = pygame.image.load(r"C:\Users\brook\OneDrive\Desktop\code\Game\pygame_game\assets\mage.png")
+    mage_img = pygame.image.load(r"C:\Users\brook\OneDrive\Desktop\code\Game\pygame_game\assets\tommy-mage.png")
     mage_img = pygame.transform.scale(mage_img, (CHAR_SIZE, CHAR_SIZE))
 except Exception as e:
     print("Failed to load mage image:", e)
