@@ -29,7 +29,7 @@ clock = pygame.time.Clock()
 
 # Load and scale background image to always fill the screen
 try:
-    background = pygame.image.load(r"C:\Users\brook\OneDrive\Desktop\code\Game\pygame_game\assets\background4-1.png")
+    background = pygame.image.load(r"C:\Users\brook\OneDrive\Desktop\code\Game\pygame_game\assets\tommy-background.png")
     background = background.convert()
     original_size = background.get_size()
     print(f"Background loaded successfully. Original size: {original_size}")
@@ -56,7 +56,7 @@ except Exception as e:
     background = None
     
 # Load and scale player images (optional) using absolute paths
-CHAR_SIZE = 300  # Set this at the top
+CHAR_SIZE = 500  # Set this at the top
 try:
     warrior_img = pygame.image.load(r"C:\Users\brook\OneDrive\Desktop\code\Game\pygame_game\assets\warrior.png")
     warrior_img = pygame.transform.scale(warrior_img, (CHAR_SIZE, CHAR_SIZE))
@@ -154,6 +154,8 @@ player1_class, player1_name = character_selection(1)
 remaining_classes = [cls for cls in ["Warrior", "Mage"] if cls.lower() != player1_class.lower()]
 player2_class, player2_name = character_selection(2, available_classes=remaining_classes)
 
+OFFSET_Y = -40  # Negative value moves characters up
+
 # --- Create players based on selection ---
 if player1_class == "warrior":
     player1 = create_warrior()
@@ -161,7 +163,7 @@ else:
     player1 = create_mage()
 player1.name = player1_name
 player1.x = WIDTH // 4 - CHAR_SIZE // 2
-player1.y = HEIGHT // 2 - CHAR_SIZE // 2
+player1.y = HEIGHT // 2 - CHAR_SIZE // 2 + OFFSET_Y
 
 if player2_class == "warrior":
     player2 = create_warrior()
@@ -169,7 +171,7 @@ else:
     player2 = create_mage()
 player2.name = player2_name
 player2.x = 3 * WIDTH // 4 - CHAR_SIZE // 2
-player2.y = HEIGHT // 2 - CHAR_SIZE // 2
+player2.y = HEIGHT // 2 - CHAR_SIZE // 2 + OFFSET_Y
 
 ability_message = ""
 message_timer = 0
@@ -192,43 +194,43 @@ while running:
                         ability_message = result
                         message_timer = 120
                         turn = 2  # Switch to Player 2's turn
-                    if event.key == pygame.K_e:
+                    if event.key == pygame.K_w:
                         result = player1.use_ability(1, player2)
+                        ability_message = result
+                        message_timer = 120
+                        turn = 2  # Switch to Player 2's turn
+                    if event.key == pygame.K_e:
+                        result = player1.use_ability(2, player1)
                         ability_message = result
                         message_timer = 120
                         turn = 2  # Switch to Player 2's turn
                     if event.key == pygame.K_r:
                         print(f"R key pressed! Player 1 has {len(player1.abilities)} abilities")
-                        print(f"Trying to use ability index 2...")
-                        result = player1.use_ability(2, player1)
-                        print(f"Result: {result}")
-                        ability_message = result
-                        message_timer = 120
-                        turn = 2  # Switch to Player 2's turn
-                    if event.key == pygame.K_f:
+                        print(f"Trying to use ability index 3...")
                         result = player1.use_ability(3, player1)
+                        print(f"Result: {result}")
                         ability_message = result
                         message_timer = 120
                         turn = 2  # Switch to Player 2's turn
 
                 # Player 2's turn
                 if turn == 2:
-                    if event.key == pygame.K_PERIOD:
+                    if event.key == pygame.K_u:
                         result = player2.use_ability(0, player1)
                         ability_message = result
                         message_timer = 120
                         turn = 1  # Switch to Player 1's turn
-                    if event.key == pygame.K_SLASH:
+                    if event.key == pygame.K_i:
                         result = player2.use_ability(1, player1)
                         ability_message = result
                         message_timer = 120
                         turn = 1  # Switch to Player 1's turn
-                    if event.key == pygame.K_QUOTE:
+                    if event.key == pygame.K_o:
                         result = player2.use_ability(2, player2)
                         ability_message = result
                         message_timer = 120
                         turn = 1  # Switch to Player 1's turn
-                    if event.key == pygame.K_HASH:
+                    if event.key == pygame.K_p:
                         result = player2.use_ability(3, player2)
                         ability_message = result
                         message_timer = 120
@@ -253,6 +255,45 @@ while running:
         # Fallback: solid color background
         screen.fill((30, 30, 30))
 
+    # --- Draw Warrior and Mage name and health bar at top left and top right ---
+    if player1_class == "warrior":
+        warrior = player1
+        warrior_name = player1.name
+        warrior_health = player1.health
+        warrior_max_health = player1.max_health
+        mage = player2
+        mage_name = player2.name
+        mage_health = player2.health
+        mage_max_health = player2.max_health
+    else:
+        warrior = player2
+        warrior_name = player2.name
+        warrior_health = player2.health
+        warrior_max_health = player2.max_health
+        mage = player1
+        mage_name = player1.name
+        mage_health = player1.health
+        mage_max_health = player1.max_health
+
+    name_font = pygame.font.SysFont(None, 48)
+    # Warrior top left
+    name_surface = name_font.render(warrior_name, True, (255, 255, 0))
+    screen.blit(name_surface, (20, 20))
+    # Even bigger health bar
+    bar_x, bar_y, bar_w, bar_h = 20, 70, 400, 40
+    draw_health_bar(screen, bar_x, bar_y, warrior_health, warrior_max_health, width=bar_w, height=bar_h)
+    health_text = f"{warrior_health} / {warrior_max_health}"
+    health_surface = name_font.render(health_text, True, (255, 255, 255))
+    screen.blit(health_surface, (bar_x + bar_w // 2 - health_surface.get_width() // 2, bar_y + bar_h // 2 - health_surface.get_height() // 2))
+    # Mage top right
+    name_surface = name_font.render(mage_name, True, (0, 255, 255))
+    screen.blit(name_surface, (WIDTH - name_surface.get_width() - 20, 20))
+    bar_x, bar_y, bar_w, bar_h = WIDTH - 420, 70, 400, 40
+    draw_health_bar(screen, bar_x, bar_y, mage_health, mage_max_health, width=bar_w, height=bar_h)
+    health_text = f"{mage_health} / {mage_max_health}"
+    health_surface = name_font.render(health_text, True, (255, 255, 255))
+    screen.blit(health_surface, (bar_x + bar_w // 2 - health_surface.get_width() // 2, bar_y + bar_h // 2 - health_surface.get_height() // 2))
+
     # Draw player 1
     if player1_class == "warrior" and warrior_img:
         screen.blit(warrior_img, (player1.x, player1.y))
@@ -260,9 +301,6 @@ while running:
         screen.blit(mage_img, (player1.x, player1.y))
     else:
         pygame.draw.rect(screen, (255, 0, 0), (player1.x, player1.y, CHAR_SIZE, CHAR_SIZE))
-    draw_health_bar(screen, player1.x, player1.y - 15, player1.health, player1.max_health)
-    name1 = font.render(player1.name, True, (255, 255, 255))
-    screen.blit(name1, (player1.x, player1.y - 35))
 
     # Draw player 2
     if player2_class == "warrior" and warrior_img:
@@ -271,9 +309,6 @@ while running:
         screen.blit(mage_img, (player2.x, player2.y))
     else:
         pygame.draw.rect(screen, (0, 0, 255), (player2.x, player2.y, CHAR_SIZE, CHAR_SIZE))
-    draw_health_bar(screen, player2.x, player2.y - 15, player2.health, player2.max_health)
-    name2 = font.render(player2.name, True, (255, 255, 255))
-    screen.blit(name2, (player2.x, player2.y - 35))
 
     # --- Draw Abilities for Warrior (bottom left) and Mage (bottom right) ---
     ability_font = pygame.font.SysFont(None, 32)
@@ -284,17 +319,17 @@ while running:
     if player1_class == "warrior":
         warrior = player1
         warrior_turn = (turn == 1)
-        warrior_keys = ["Q", "E", "R", "F"]
+        warrior_keys = ["Q", "W", "E", "R"]
         mage = player2
         mage_turn = (turn == 2)
-        mage_keys = [".", "/", "'", "#"]
+        mage_keys = ["U", "I", "O", "P"]
     else:
         warrior = player2
         warrior_turn = (turn == 2)
-        warrior_keys = ["Q", "E", "R", "F"]
+        warrior_keys = ["Q", "W", "E", "R"]
         mage = player1
         mage_turn = (turn == 1)
-        mage_keys = [".", "/", "'", "#"]
+        mage_keys = ["U", "I", "O", "P"]
 
     # Draw Warrior abilities (bottom left)
     for i, ability in enumerate(warrior.abilities):

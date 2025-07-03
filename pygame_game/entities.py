@@ -54,6 +54,7 @@ class GameCharacter:
         self.stunned = False
         self.x = x
         self.y = y
+        self.blocking = False
 
     def take_damage(self, amount):
         if self.blocking:
@@ -110,15 +111,19 @@ class GameCharacter:
 # --- Ability Functions ---
 def light_attack(user, target):
     damage = 8 + random.randint(2, 6)
+    block_msg = target.take_damage(damage)
+    if block_msg:
+        return f"{user.name} uses Light Attack!\n{block_msg}"
     msg = f"{user.name} uses Light Attack! {target.name} takes {damage} damage."
-    target.take_damage(damage)
     return msg
 
 
 def heavy_strike(user, target):
     damage = 15 + random.randint(5, 15)
+    block_msg = target.take_damage(damage)
+    if block_msg:
+        return f"{user.name} uses Heavy Strike!\n{block_msg}"
     msg = f"{user.name} uses Heavy Strike! {target.name} takes {damage} damage."
-    target.take_damage(damage)
     # 30% chance to stun
     if random.random() < 0.3:
         stun_effect = StatusEffect(
@@ -137,8 +142,10 @@ def block_ability(user, target):
 
 def fireball(user, target):
     damage = 20 + random.randint(10, 20)
+    block_msg = target.take_damage(damage)
+    if block_msg:
+        return f"{user.name} casts Fireball!\n{block_msg}"
     msg = f"{user.name} casts Fireball! {target.name} takes {damage} damage."
-    target.take_damage(damage)
     # 40% chance to poison
     if random.random() < 0.4:
         poison_effect = StatusEffect(
@@ -164,16 +171,10 @@ def health_potion(user, target):
 # --- Create Characters and Add Abilities ---
 def create_warrior():
     w = GameCharacter("Duncan", 120)
-    print("Creating warrior...")
     w.add_ability(Ability("Light Attack", light_attack, "A quick, reliable attack", is_damage=True))
-    print(f"Added Light Attack. Total abilities: {len(w.abilities)}")
     w.add_ability(Ability("Heavy Strike", heavy_strike, "A powerful melee attack with a chance to stun.", is_damage=True))
-    print(f"Added Heavy Strike. Total abilities: {len(w.abilities)}")
     w.add_ability(Ability("Block", block_ability, "Block the next attack.", blocking=True))
-    print(f"Added Block. Total abilities: {len(w.abilities)}")
     w.add_ability(Ability("Health Potion", health_potion, "Restore health by 30 HP."))
-    print(f"Added Health Potion. Total abilities: {len(w.abilities)}")
-    print(f"Warrior created with {len(w.abilities)} abilities")
     return w
 
 def create_mage():
@@ -183,3 +184,7 @@ def create_mage():
     m.add_ability(Ability("Heal", heal_spell, "Restore health to yourself."))
     m.add_ability(Ability("Health Potion", health_potion, "Restore health by 30 HP. "))
     return m
+
+def draw_health_bar(screen, x, y, current_health, max_health, width=200, height=20):
+    # Implementation of draw_health_bar function
+    pass
