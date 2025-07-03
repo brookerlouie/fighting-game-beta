@@ -8,10 +8,12 @@ from re import X
 
 # --- Ability System ---
 class Ability:
-    def __init__(self, name, action, description=""):
+    def __init__(self, name, action, description="", is_damage=False, blocking=False):
         self.name = name
         self.action = action  # function(user, target)
         self.description = description
+        self.is_damage = is_damage
+        self.blocking = False
 
     def use(self, user, target):
         return self.action(user, target)
@@ -54,6 +56,9 @@ class GameCharacter:
         self.y = y
 
     def take_damage(self, amount):
+        if self.blocking:
+            self.blocking = False
+            return f"{self.name} blocks the attack!"
         self.health = max(0, self.health - amount)
         if self.health == 0:
             self.on_defeat()
@@ -103,6 +108,13 @@ class GameCharacter:
         return messages
 
 # --- Ability Functions ---
+def light_attack(user, target):
+    damage = 8 + random.randint(2, 6)
+    msg = f"{user.name} uses Light Attack! {target.name} takes {damage} damage."
+    target.take_damage(damage)
+    return msg
+
+
 def heavy_strike(user, target):
     damage = 15 + random.randint(5, 15)
     msg = f"{user.name} uses Heavy Strike! {target.name} takes {damage} damage."
@@ -118,6 +130,10 @@ def heavy_strike(user, target):
         )
         msg += f"\n{target.add_status_effect(stun_effect)}"
     return msg
+
+def block_ability(user, target):
+    user.blocking = True
+    return f"{user.name} is ready to block the next attack!"
 
 def fireball(user, target):
     damage = 20 + random.randint(10, 20)
@@ -148,13 +164,22 @@ def health_potion(user, target):
 # --- Create Characters and Add Abilities ---
 def create_warrior():
     w = GameCharacter("Duncan", 120)
-    w.add_ability(Ability("Heavy Strike", heavy_strike, "A powerful melee attack with a chance to stun."))
+    print("Creating warrior...")
+    w.add_ability(Ability("Light Attack", light_attack, "A quick, reliable attack", is_damage=True))
+    print(f"Added Light Attack. Total abilities: {len(w.abilities)}")
+    w.add_ability(Ability("Heavy Strike", heavy_strike, "A powerful melee attack with a chance to stun.", is_damage=True))
+    print(f"Added Heavy Strike. Total abilities: {len(w.abilities)}")
+    w.add_ability(Ability("Block", block_ability, "Block the next attack.", blocking=True))
+    print(f"Added Block. Total abilities: {len(w.abilities)}")
     w.add_ability(Ability("Health Potion", health_potion, "Restore health by 30 HP."))
+    print(f"Added Health Potion. Total abilities: {len(w.abilities)}")
+    print(f"Warrior created with {len(w.abilities)} abilities")
     return w
 
 def create_mage():
     m = GameCharacter("Gandalf", 80)
-    m.add_ability(Ability("Fireball", fireball, "A fiery magical attack with a chance to poison."))
+    m.add_ability(Ability("Light Attack", light_attack, "A quick, reliable attack", is_damage=True))
+    m.add_ability(Ability("Fireball", fireball, "A fiery magical attack with a chance to poison.", is_damage=True))
     m.add_ability(Ability("Heal", heal_spell, "Restore health to yourself."))
     m.add_ability(Ability("Health Potion", health_potion, "Restore health by 30 HP. "))
     return m
