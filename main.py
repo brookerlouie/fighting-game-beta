@@ -4,11 +4,12 @@
 # Entry point for your game
 
 # Import your game modules here
-# from game.engine import GameEngine
+# from pygame_game.engine import GameEngine
 
 import pygame
 import sys
 import math
+import os
 from pygame_game.settings import WIDTH, HEIGHT
 from pygame_game.entities import create_warrior, create_mage
 
@@ -28,8 +29,9 @@ pygame.display.set_caption("Fighting Game")
 clock = pygame.time.Clock()
 
 # Load and scale background image to always fill the screen
+ASSETS_DIR = os.path.join(os.path.dirname(__file__), "pygame_game", "assets")
 try:
-    background = pygame.image.load(r"C:\Users\brook\OneDrive\Desktop\code\Game\pygame_game\assets\tommy-background.png")
+    background = pygame.image.load(os.path.join(ASSETS_DIR, "tommy-background.png"))
     background = background.convert()
     original_size = background.get_size()
     print(f"Background loaded successfully. Original size: {original_size}")
@@ -58,13 +60,13 @@ except Exception as e:
 # Load and scale player images (optional) using absolute paths
 CHAR_SIZE = 500  # Set this at the top
 try:
-    warrior_img = pygame.image.load(r"C:\Users\brook\OneDrive\Desktop\code\Game\pygame_game\assets\tommy-warrior.png")
+    warrior_img = pygame.image.load(os.path.join(ASSETS_DIR, "tommy-warrior.png"))
     warrior_img = pygame.transform.scale(warrior_img, (CHAR_SIZE, CHAR_SIZE))
 except Exception as e:
     print("Failed to load warrior image:", e)
     warrior_img = None
 try:
-    mage_img = pygame.image.load(r"C:\Users\brook\OneDrive\Desktop\code\Game\pygame_game\assets\tommy-mage.png")
+    mage_img = pygame.image.load(os.path.join(ASSETS_DIR, "tommy-mage.png"))
     mage_img = pygame.transform.scale(mage_img, (CHAR_SIZE, CHAR_SIZE))
 except Exception as e:
     print("Failed to load mage image:", e)
@@ -255,44 +257,43 @@ while running:
         # Fallback: solid color background
         screen.fill((30, 30, 30))
 
-    # --- Draw Warrior and Mage name and health bar at top left and top right ---
-    if player1_class == "warrior":
-        warrior = player1
-        warrior_name = player1.name
-        warrior_health = player1.health
-        warrior_max_health = player1.max_health
-        mage = player2
-        mage_name = player2.name
-        mage_health = player2.health
-        mage_max_health = player2.max_health
+    # Determine which player is on the left and which is on the right
+    if player1.x < player2.x:
+        left_player = player1
+        right_player = player2
+        left_class = player1_class
+        right_class = player2_class
+        left_keys = ["Q", "W", "E", "R"]
+        right_keys = ["U", "I", "O", "P"]
+        left_turn = (turn == 1)
+        right_turn = (turn == 2)
     else:
-        warrior = player2
-        warrior_name = player2.name
-        warrior_health = player2.health
-        warrior_max_health = player2.max_health
-        mage = player1
-        mage_name = player1.name
-        mage_health = player1.health
-        mage_max_health = player1.max_health
+        left_player = player2
+        right_player = player1
+        left_class = player2_class
+        right_class = player1_class
+        left_keys = ["U", "I", "O", "P"]
+        right_keys = ["Q", "W", "E", "R"]
+        left_turn = (turn == 2)
+        right_turn = (turn == 1)
 
+    # Draw health bars and names on the correct sides
     name_font = pygame.font.SysFont(None, 48)
-    # Warrior top left
-    name_surface = name_font.render(warrior_name, True, (255, 255, 0))
+    bar_w, bar_h = 400, 40
+    # Left side
+    name_surface = name_font.render(left_player.name, True, (255, 255, 0) if left_class == "warrior" else (0, 255, 255))
     screen.blit(name_surface, (20, 20))
-    # Even bigger health bar
-    bar_x, bar_y, bar_w, bar_h = 20, 70, 400, 40
-    draw_health_bar(screen, bar_x, bar_y, warrior_health, warrior_max_health, width=bar_w, height=bar_h)
-    health_text = f"{warrior_health} / {warrior_max_health}"
+    draw_health_bar(screen, 20, 70, left_player.health, left_player.max_health, width=bar_w, height=bar_h)
+    health_text = f"{left_player.health} / {left_player.max_health}"
     health_surface = name_font.render(health_text, True, (255, 255, 255))
-    screen.blit(health_surface, (bar_x + bar_w // 2 - health_surface.get_width() // 2, bar_y + bar_h // 2 - health_surface.get_height() // 2))
-    # Mage top right
-    name_surface = name_font.render(mage_name, True, (0, 255, 255))
+    screen.blit(health_surface, (20 + bar_w // 2 - health_surface.get_width() // 2, 70 + bar_h // 2 - health_surface.get_height() // 2))
+    # Right side
+    name_surface = name_font.render(right_player.name, True, (255, 255, 0) if right_class == "warrior" else (0, 255, 255))
     screen.blit(name_surface, (WIDTH - name_surface.get_width() - 20, 20))
-    bar_x, bar_y, bar_w, bar_h = WIDTH - 420, 70, 400, 40
-    draw_health_bar(screen, bar_x, bar_y, mage_health, mage_max_health, width=bar_w, height=bar_h)
-    health_text = f"{mage_health} / {mage_max_health}"
+    draw_health_bar(screen, WIDTH - 420, 70, right_player.health, right_player.max_health, width=bar_w, height=bar_h)
+    health_text = f"{right_player.health} / {right_player.max_health}"
     health_surface = name_font.render(health_text, True, (255, 255, 255))
-    screen.blit(health_surface, (bar_x + bar_w // 2 - health_surface.get_width() // 2, bar_y + bar_h // 2 - health_surface.get_height() // 2))
+    screen.blit(health_surface, (WIDTH - 420 + bar_w // 2 - health_surface.get_width() // 2, 70 + bar_h // 2 - health_surface.get_height() // 2))
 
     # Draw player 1
     if player1_class == "warrior" and warrior_img:
@@ -310,42 +311,34 @@ while running:
     else:
         pygame.draw.rect(screen, (0, 0, 255), (player2.x, player2.y, CHAR_SIZE, CHAR_SIZE))
 
-    # --- Draw Abilities for Warrior (bottom left) and Mage (bottom right) ---
-    ability_font = pygame.font.SysFont(None, 32)
-    padding = 10
-    ability_y = HEIGHT - 120  # Adjust as needed
+    # Draw a semi-transparent background for abilities
+    def draw_ability_box(surface, x, y, w, h):
+        s = pygame.Surface((w, h), pygame.SRCALPHA)
+        s.fill((0, 0, 0, 180))  # Black with alpha
+        surface.blit(s, (x, y))
 
-    # Determine which player is the warrior and which is the mage
-    if player1_class == "warrior":
-        warrior = player1
-        warrior_turn = (turn == 1)
-        warrior_keys = ["Q", "W", "E", "R"]
-        mage = player2
-        mage_turn = (turn == 2)
-        mage_keys = ["U", "I", "O", "P"]
-    else:
-        warrior = player2
-        warrior_turn = (turn == 2)
-        warrior_keys = ["Q", "W", "E", "R"]
-        mage = player1
-        mage_turn = (turn == 1)
-        mage_keys = ["U", "I", "O", "P"]
-
-    # Draw Warrior abilities (bottom left)
-    for i, ability in enumerate(warrior.abilities):
-        key = warrior_keys[i]
+    ability_box_height = 4 * 28 + 12
+    box_width = 250
+    box_y = HEIGHT - ability_box_height
+    text_x_offset = 12
+    text_y_offset = 6
+    small_ability_font = pygame.font.SysFont(None, 24, bold=True)
+    # Left ability box
+    draw_ability_box(screen, 0, box_y, box_width, ability_box_height)
+    for i, ability in enumerate(left_player.abilities):
+        key = left_keys[i]
+        color = (255, 255, 0) if left_class == "warrior" and left_turn else (0, 255, 255) if left_class == "mage" and left_turn else (180, 180, 180)
         text = f"{key}: {ability.name}"
-        color = (255, 255, 0) if warrior_turn else (180, 180, 180)
-        surf = ability_font.render(text, True, color)
-        screen.blit(surf, (padding, ability_y + i * 32))
-
-    # Draw Mage abilities (bottom right)
-    for i, ability in enumerate(mage.abilities):
-        key = mage_keys[i]
+        surf = small_ability_font.render(text, True, color)
+        screen.blit(surf, (text_x_offset, box_y + text_y_offset + i * 28))
+    # Right ability box
+    draw_ability_box(screen, WIDTH - box_width, box_y, box_width, ability_box_height)
+    for i, ability in enumerate(right_player.abilities):
+        key = right_keys[i]
+        color = (255, 255, 0) if right_class == "warrior" and right_turn else (0, 255, 255) if right_class == "mage" and right_turn else (180, 180, 180)
         text = f"{key}: {ability.name}"
-        color = (0, 255, 255) if mage_turn else (180, 180, 180)
-        surf = ability_font.render(text, True, color)
-        screen.blit(surf, (WIDTH - surf.get_width() - padding, ability_y + i * 32))
+        surf = small_ability_font.render(text, True, color)
+        screen.blit(surf, (WIDTH - box_width + text_x_offset, box_y + text_y_offset + i * 28))
 
     # Display game state
     if game_over and winner:
