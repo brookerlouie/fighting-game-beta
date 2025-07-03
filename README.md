@@ -1,6 +1,6 @@
 # Fighting Game (Pygame)
 
-A turn-based two-player fighting game built with Python and pygame. Players take turns using abilities to defeat their opponent in a strategic battle featuring three unique character classes with animated sprites.
+A turn-based two-player fighting game built with Python and pygame. Players take turns using abilities to defeat their opponent in a strategic battle featuring three unique character classes with animated sprites, customizable settings, and a modern UI.
 
 ## Project Structure
 
@@ -12,10 +12,10 @@ Game/
     entities.py            # Character classes and ability logic
     __init__.py            # Package exports
     assets/
-      background.png       # Background image
-      warrior.png          # Warrior character image
-      mage.gif             # Mage character animated GIF
-      ghost.gif            # Ghost character animated GIF
+      tommy-background.png # Background image
+      tommy-warrior.png    # Warrior character image
+      Mage-idle.gif        # Mage character animated GIF
+      Ghost-idle.gif       # Ghost character animated GIF
   README.md
 ```
 
@@ -30,7 +30,7 @@ Game/
    ```sh
    python main.py
    ```
-4. The game will launch in fullscreen. Press **Escape** or close the window to quit.
+4. The game will launch in fullscreen. Press **Escape** to pause or quit.
 
 ## Gameplay
 
@@ -49,6 +49,11 @@ Game/
 
 ### Controls
 
+#### Game Controls
+- **Escape**: Pause/Resume game or quit (when game over)
+- **Mouse**: Click menu options in pause/settings menus
+
+#### Player Abilities
 - **Player 1** (always uses these keys):
   - **Q**: Ability 1 (Light Attack)
   - **W**: Ability 2 (Heavy Strike/Fireball/Slash)
@@ -103,6 +108,35 @@ Regardless of which class or side, Player 1 always uses Q/W/E/R and Player 2 alw
 - UI automatically adjusts based on character positions
 - Active player's abilities are highlighted in yellow
 - Inactive player's abilities are shown in gray
+- FPS counter displayed underneath the left health bar
+- Turn indicator shows whose turn it is with colored borders around active player
+
+## Settings & Customization
+
+### Pause Menu
+- Press **Escape** during gameplay to access the pause menu
+- Options include:
+  - **Settings**: Access brightness, resolution, and display options
+  - **Exit Game**: Quit the game
+
+### Settings Menu
+- **Brightness Control**: Adjust game brightness from 0% to 150%
+- **Resolution Options**: Choose from multiple resolutions and FPS:
+  - 800x600 @ 60fps
+  - 1024x768 @ 60fps
+  - 1280x720 @ 60fps
+  - 1280x720 @ 120fps
+  - 1920x1080 @ 60fps
+  - 1920x1080 @ 120fps
+  - 1920x1080 @ 144fps
+- **Fullscreen Toggle**: Switch between fullscreen and windowed mode
+- Changes apply immediately and persist between game sessions
+
+### Navigation Controls
+- **W/S** or **Up/Down**: Navigate menu options
+- **Enter**: Select/apply option
+- **Escape**: Go back to previous menu
+- **Mouse**: Click menu options
 
 ## Technical Features
 
@@ -118,6 +152,17 @@ Regardless of which class or side, Player 1 always uses Q/W/E/R and Player 2 alw
 - Blocking system to counter attacks
 - Dynamic targeting based on character class
 
+### Performance Monitoring
+- Real-time FPS counter
+- Smooth frame rate tracking
+- Optimized rendering for different resolutions
+
+### Display Management
+- Dynamic resolution switching
+- Fullscreen/windowed mode support
+- Brightness adjustment with real-time preview
+- Background scaling for different resolutions
+
 ## Customization
 - Edit `pygame_game/settings.py` to change health, damage values, and other game settings
 - Replace images in `pygame_game/assets/` to use your own characters or backgrounds
@@ -131,6 +176,8 @@ Regardless of which class or side, Player 1 always uses Q/W/E/R and Player 2 alw
   pip install pygame pillow
   ```
 - For animated GIFs, ensure the Pillow library is installed for proper frame extraction
+- If resolution changes don't apply, try restarting the game
+- For performance issues, try lowering the resolution or FPS in the settings menu
 
 ---
 

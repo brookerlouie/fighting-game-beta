@@ -9,7 +9,8 @@
 import pygame
 import sys
 import math
-from pygame_game.settings import WIDTH, HEIGHT
+import pygame_game.settings as settings
+from pygame_game.settings import get_current_resolution, apply_brightness_to_color, RESOLUTION_OPTIONS, BRIGHTNESS, FULLSCREEN
 from pygame_game.entities import create_warrior, create_mage, create_ghost
 from PIL import Image
 
@@ -23,7 +24,8 @@ def is_in_range(player1, player2, max_distance):
 pygame.init()
 # Get the user's current screen size for fullscreen
 info = pygame.display.Info()
-WIDTH, HEIGHT = info.current_w, info.current_h
+# Use the current resolution from settings
+WIDTH, HEIGHT, FPS = get_current_resolution()
 screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.FULLSCREEN)
 pygame.display.set_caption("Fighting Game")
 clock = pygame.time.Clock()
@@ -119,6 +121,7 @@ player2_keys = ["U", "I", "O", "P"]
 # Add game over state
 game_over = False
 winner = None
+paused = False  # Pause menu state
 
 # Animation state
 mage_anim_index = 0
@@ -190,6 +193,266 @@ def character_selection(player_num, available_classes=None):
 
     return classes[selected].lower(), name.strip() if name.strip() else classes[selected]
 
+def settings_menu(screen, clock):
+    global WIDTH, HEIGHT, FPS, BRIGHTNESS, CURRENT_RESOLUTION_INDEX, FULLSCREEN
+    global background
+    """Settings menu with brightness, resolution, and FPS options"""
+    
+    selected_option = 0
+    options = ["Brightness", "Resolution", "Fullscreen", "Back"]
+    done = False
+    
+    while not done:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    done = True
+                elif event.key == pygame.K_UP or event.key == pygame.K_w:
+                    selected_option = (selected_option - 1) % len(options)
+                elif event.key == pygame.K_DOWN or event.key == pygame.K_s:
+                    selected_option = (selected_option + 1) % len(options)
+                elif event.key == pygame.K_RETURN:
+                    if selected_option == 0:  # Brightness
+                        brightness_menu(screen, clock)
+                    elif selected_option == 1:  # Resolution
+                        screen = resolution_menu(screen, clock)
+                    elif selected_option == 2:  # Fullscreen
+                        FULLSCREEN = not FULLSCREEN
+                        screen = apply_display_settings(screen)
+                        # Reposition players and UI after resolution/fullscreen change
+                        player1.x = WIDTH // 4 - CHAR_SIZE // 2
+                        player1.y = HEIGHT // 2 - CHAR_SIZE // 2 + OFFSET_Y
+                        player2.x = 3 * WIDTH // 4 - CHAR_SIZE // 2
+                        player2.y = HEIGHT // 2 - CHAR_SIZE // 2 + OFFSET_Y
+                        global ability_y
+                        ability_y = HEIGHT - 120
+                        # Rescale background if needed
+                        if background:
+                            try:
+                                original_size = background.get_size()
+                                if original_size != (WIDTH, HEIGHT):
+                                    background = pygame.transform.smoothscale(background, (WIDTH, HEIGHT))
+                            except Exception:
+                                pass
+                    elif selected_option == 3:  # Back
+                        done = True
+                elif event.key == pygame.K_LEFT or event.key == pygame.K_a:
+                    if selected_option == 0:  # Brightness
+                        BRIGHTNESS = max(0, BRIGHTNESS - 10)
+                    elif selected_option == 2:  # Fullscreen
+                        FULLSCREEN = not FULLSCREEN
+                        screen = apply_display_settings(screen)
+                elif event.key == pygame.K_RIGHT or event.key == pygame.K_d:
+                    if selected_option == 0:  # Brightness
+                        BRIGHTNESS = min(150, BRIGHTNESS + 10)
+                    elif selected_option == 2:  # Fullscreen
+                        FULLSCREEN = not FULLSCREEN
+                        screen = apply_display_settings(screen)
+        
+        # Draw settings menu
+        screen.fill((20, 20, 40))
+        
+        title_font = pygame.font.SysFont(None, 72)
+        title = title_font.render("SETTINGS", True, (255, 255, 255))
+        screen.blit(title, (WIDTH // 2 - title.get_width() // 2, 100))
+        
+        option_font = pygame.font.SysFont(None, 48)
+        for i, option in enumerate(options):
+            color = (255, 255, 0) if i == selected_option else (200, 200, 200)
+            text = option
+            
+            # Add current values
+            if option == "Brightness":
+                text += f": {BRIGHTNESS}%"
+            elif option == "Resolution":
+                current_res = get_current_resolution()
+                text += f": {current_res[0]}x{current_res[1]} @ {current_res[2]}fps"
+            elif option == "Fullscreen":
+                text += f": {'ON' if FULLSCREEN else 'OFF'}"
+            
+            option_surface = option_font.render(text, True, color)
+            y_pos = 250 + i * 60
+            screen.blit(option_surface, (WIDTH // 2 - option_surface.get_width() // 2, y_pos))
+        
+        # Instructions
+        instruction_font = pygame.font.SysFont(None, 32)
+        instructions = [
+            "Use W/S or Up/Down to navigate",
+            "Use A/D or Left/Right to adjust values",
+            "Press Enter to select, ESC to go back"
+        ]
+        for i, instruction in enumerate(instructions):
+            instruction_surface = instruction_font.render(instruction, True, (150, 150, 150))
+            screen.blit(instruction_surface, (WIDTH // 2 - instruction_surface.get_width() // 2, 500 + i * 30))
+        
+        pygame.display.flip()
+        clock.tick(30)
+    
+    return screen
+
+def brightness_menu(screen, clock):
+    global BRIGHTNESS
+    """Brightness adjustment menu"""
+    
+    done = False
+    while not done:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    done = True
+                elif event.key == pygame.K_LEFT or event.key == pygame.K_a:
+                    BRIGHTNESS = max(0, BRIGHTNESS - 5)
+                elif event.key == pygame.K_RIGHT or event.key == pygame.K_d:
+                    BRIGHTNESS = min(150, BRIGHTNESS + 5)
+        
+        # Draw brightness menu
+        screen.fill((20, 20, 40))
+        
+        title_font = pygame.font.SysFont(None, 72)
+        title = title_font.render("BRIGHTNESS", True, (255, 255, 255))
+        screen.blit(title, (WIDTH // 2 - title.get_width() // 2, 100))
+        
+        # Brightness bar
+        bar_width = 400
+        bar_height = 40
+        bar_x = WIDTH // 2 - bar_width // 2
+        bar_y = HEIGHT // 2 - 50
+        
+        # Background bar
+        pygame.draw.rect(screen, (100, 100, 100), (bar_x, bar_y, bar_width, bar_height))
+        
+        # Brightness level
+        brightness_width = int((BRIGHTNESS / 150.0) * bar_width)
+        brightness_color = apply_brightness_to_color((255, 255, 255))
+        pygame.draw.rect(screen, brightness_color, (bar_x, bar_y, brightness_width, bar_height))
+        
+        # Border
+        pygame.draw.rect(screen, (255, 255, 255), (bar_x, bar_y, bar_width, bar_height), 3)
+        
+        # Brightness text
+        value_font = pygame.font.SysFont(None, 48)
+        value_text = f"{BRIGHTNESS}%"
+        value_surface = value_font.render(value_text, True, (255, 255, 255))
+        screen.blit(value_surface, (WIDTH // 2 - value_surface.get_width() // 2, bar_y + bar_height + 20))
+        
+        # Instructions
+        instruction_font = pygame.font.SysFont(None, 32)
+        instructions = [
+            "Use A/D or Left/Right to adjust brightness",
+            "Press ESC to go back"
+        ]
+        for i, instruction in enumerate(instructions):
+            instruction_surface = instruction_font.render(instruction, True, (150, 150, 150))
+            screen.blit(instruction_surface, (WIDTH // 2 - instruction_surface.get_width() // 2, 500 + i * 30))
+        
+        pygame.display.flip()
+        clock.tick(30)
+
+def resolution_menu(screen, clock):
+    global WIDTH, HEIGHT, FPS
+    global background
+    """Resolution and FPS selection menu"""
+    
+    selected_resolution = settings.CURRENT_RESOLUTION_INDEX
+    done = False
+    
+    while not done:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    done = True
+                elif event.key == pygame.K_UP or event.key == pygame.K_w:
+                    selected_resolution = (selected_resolution - 1) % len(RESOLUTION_OPTIONS)
+                elif event.key == pygame.K_DOWN or event.key == pygame.K_s:
+                    selected_resolution = (selected_resolution + 1) % len(RESOLUTION_OPTIONS)
+                elif event.key == pygame.K_RETURN:
+                    # Update the current resolution index first
+                    settings.CURRENT_RESOLUTION_INDEX = selected_resolution
+                    # Get the new resolution values
+                    new_width, new_height, new_fps = RESOLUTION_OPTIONS[selected_resolution]
+                    print(f"Changing resolution from {WIDTH}x{HEIGHT} @ {FPS}fps to {new_width}x{new_height} @ {new_fps}fps")
+                    
+                    # Update global variables
+                    WIDTH, HEIGHT, FPS = new_width, new_height, new_fps
+                    
+                    screen = apply_display_settings(screen)
+                    # Reposition players and UI after resolution/fullscreen change
+                    player1.x = WIDTH // 4 - CHAR_SIZE // 2
+                    player1.y = HEIGHT // 2 - CHAR_SIZE // 2 + OFFSET_Y
+                    player2.x = 3 * WIDTH // 4 - CHAR_SIZE // 2
+                    player2.y = HEIGHT // 2 - CHAR_SIZE // 2 + OFFSET_Y
+                    global ability_y
+                    ability_y = HEIGHT - 120
+                    # Rescale background if needed
+                    if background:
+                        try:
+                            original_size = background.get_size()
+                            if original_size != (WIDTH, HEIGHT):
+                                background = pygame.transform.smoothscale(background, (WIDTH, HEIGHT))
+                        except Exception:
+                            pass
+                    print(f"Resolution changed successfully to {WIDTH}x{HEIGHT} @ {FPS}fps")
+                    done = True
+        
+        # Draw resolution menu
+        screen.fill((20, 20, 40))
+        
+        title_font = pygame.font.SysFont(None, 72)
+        title = title_font.render("RESOLUTION & FPS", True, (255, 255, 255))
+        screen.blit(title, (WIDTH // 2 - title.get_width() // 2, 100))
+        
+        option_font = pygame.font.SysFont(None, 48)
+        for i, (width, height, fps) in enumerate(RESOLUTION_OPTIONS):
+            color = (255, 255, 0) if i == selected_resolution else (200, 200, 200)
+            text = f"{width}x{height} @ {fps}fps"
+            # Check if this resolution matches the current WIDTH, HEIGHT, FPS
+            if width == WIDTH and height == HEIGHT and fps == FPS:
+                text += " (Current)"
+            
+            option_surface = option_font.render(text, True, color)
+            y_pos = 250 + i * 50
+            screen.blit(option_surface, (WIDTH // 2 - option_surface.get_width() // 2, y_pos))
+        
+        # Instructions
+        instruction_font = pygame.font.SysFont(None, 32)
+        instructions = [
+            "Use W/S or Up/Down to navigate",
+            "Press Enter to apply, ESC to go back"
+        ]
+        for i, instruction in enumerate(instructions):
+            instruction_surface = instruction_font.render(instruction, True, (150, 150, 150))
+            screen.blit(instruction_surface, (WIDTH // 2 - instruction_surface.get_width() // 2, 500 + i * 30))
+        
+        pygame.display.flip()
+        clock.tick(30)
+
+    return screen
+
+def apply_display_settings(screen):
+    """Apply current display settings"""
+    global WIDTH, HEIGHT, FPS
+    
+    # WIDTH, HEIGHT, FPS are already set by the calling function
+    # Just apply the display mode with current values
+    
+    # Preserve fullscreen state when changing resolution
+    if FULLSCREEN:
+        screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.FULLSCREEN)
+    else:
+        screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    
+    pygame.display.set_caption("Fighting Game")
+    return screen
+
 # --- Character selection for both players ---
 player1_class, player1_name = character_selection(1)
 remaining_classes = [cls for cls in ["Warrior", "Mage", "Ghost"] if cls.lower() != player1_class.lower()]
@@ -221,18 +484,45 @@ player2.y = HEIGHT // 2 - CHAR_SIZE // 2 + OFFSET_Y
 ability_message = ""
 message_timer = 0
 
+# FPS tracking
+fps_counter = 0
+fps_timer = 0
+current_fps = 0
+
 running = True
 while running:
-    dt = clock.tick(30)  # milliseconds since last frame
+    dt = clock.tick(FPS)  # milliseconds since last frame
+    
+    # Update FPS counter
+    fps_counter += 1
+    fps_timer += dt
+    if fps_timer >= 1000:  # Update FPS every second
+        current_fps = fps_counter
+        fps_counter = 0
+        fps_timer = 0
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            if paused and not game_over:
+                mouse_pos = pygame.mouse.get_pos()
+                # Check if Settings was clicked
+                settings_rect = pygame.Rect(WIDTH // 2 - 100, HEIGHT // 2 - 50, 200, 50)
+                if settings_rect.collidepoint(mouse_pos):
+                    screen = settings_menu(screen, clock)
+                # Check if Exit Game was clicked
+                exit_rect = pygame.Rect(WIDTH // 2 - 100, HEIGHT // 2 + 10, 200, 50)
+                if exit_rect.collidepoint(mouse_pos):
+                    running = False
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
-                running = False
+                if not game_over:
+                    paused = not paused  # Toggle pause menu
+                else:
+                    running = False  # Exit if game is over
             
-            # Only allow ability usage if game is not over
-            if not game_over:
+            # Only allow ability usage if game is not over and not paused
+            if not game_over and not paused:
                 # Player 1's turn
                 if turn == 1:
                     if event.key == pygame.K_q:
@@ -314,8 +604,9 @@ while running:
         # Fill the entire screen with the background
         screen.blit(background, (0, 0))
     else:
-        # Fallback: solid color background
-        screen.fill((30, 30, 30))
+        # Fallback: solid color background with brightness applied
+        bg_color = apply_brightness_to_color((30, 30, 30))
+        screen.fill(bg_color)
 
     # --- Dynamic UI: Health bar, name, and abilities on the same side as the character ---
 
@@ -333,6 +624,13 @@ while running:
         health_text = f"{player1.health} / {player1.max_health}"
         health_surface = name_font.render(health_text, True, (255, 255, 255))
         screen.blit(health_surface, (bar_x + bar_w // 2 - health_surface.get_width() // 2, bar_y + bar_h // 2 - health_surface.get_height() // 2))
+        
+        # FPS counter underneath left health bar
+        fps_font = pygame.font.SysFont(None, 20)  # Small font
+        fps_text = f"FPS: {current_fps}"
+        fps_surface = fps_font.render(fps_text, True, (150, 150, 150))  # Gray color
+        screen.blit(fps_surface, (bar_x, bar_y + bar_h + 5))  # 5 pixels below health bar
+        
         # Abilities bottom left
         for i, ability in enumerate(player1.abilities):
             key = player1_keys[i]
@@ -367,6 +665,13 @@ while running:
         health_text = f"{player2.health} / {player2.max_health}"
         health_surface = name_font.render(health_text, True, (255, 255, 255))
         screen.blit(health_surface, (bar_x + bar_w // 2 - health_surface.get_width() // 2, bar_y + bar_h // 2 - health_surface.get_height() // 2))
+        
+        # FPS counter underneath left health bar (for Player 2 when on left)
+        fps_font = pygame.font.SysFont(None, 20)  # Small font
+        fps_text = f"FPS: {current_fps}"
+        fps_surface = fps_font.render(fps_text, True, (150, 150, 150))  # Gray color
+        screen.blit(fps_surface, (bar_x, bar_y + bar_h + 5))  # 5 pixels below health bar
+        
         # Abilities bottom left
         for i, ability in enumerate(player2.abilities):
             key = player2_keys[i]
@@ -488,6 +793,37 @@ while running:
         if ghost_anim_timer > 1000 // ghost_anim_speed:
             ghost_anim_index = (ghost_anim_index + 1) % len(ghost_gif_frames)
             ghost_anim_timer = 0
+
+    # Draw pause menu if game is paused
+    if paused and not game_over:
+        # Semi-transparent overlay
+        overlay = pygame.Surface((WIDTH, HEIGHT))
+        overlay.set_alpha(128)
+        overlay.fill((0, 0, 0))
+        screen.blit(overlay, (0, 0))
+        
+        # Pause menu
+        pause_font = pygame.font.SysFont(None, 72)
+        pause_title = pause_font.render("PAUSED", True, (255, 255, 255))
+        screen.blit(pause_title, (WIDTH // 2 - pause_title.get_width() // 2, HEIGHT // 2 - 150))
+        
+        # Menu options
+        menu_font = pygame.font.SysFont(None, 48)
+        options = [
+            ("Settings", (255, 255, 0)),
+            ("Exit Game", (255, 100, 100))
+        ]
+        
+        for i, (option, color) in enumerate(options):
+            option_surface = menu_font.render(option, True, color)
+            y_pos = HEIGHT // 2 - 50 + i * 60
+            screen.blit(option_surface, (WIDTH // 2 - option_surface.get_width() // 2, y_pos))
+        
+        # Instructions
+        instruction_font = pygame.font.SysFont(None, 32)
+        instruction_text = "Press ESC to resume or click an option"
+        instruction_surface = instruction_font.render(instruction_text, True, (200, 200, 200))
+        screen.blit(instruction_surface, (WIDTH // 2 - instruction_surface.get_width() // 2, HEIGHT // 2 + 150))
 
     pygame.display.flip()
 
