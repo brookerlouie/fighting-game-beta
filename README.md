@@ -77,7 +77,7 @@ Regardless of which class or side, Player 1 always uses Q/W/E/R and Player 2 alw
   - **Light Attack (Q/U):** Quick, reliable attack (10-14 damage)
   - **Heavy Strike (W/I):** Powerful melee attack with 25% chance to stun (20 damage normally, 30 damage when stun occurs)
   - **Block (E/O):** Block the next attack
-  - **Health Potion (R/P):** Restore 30 HP
+  - **Health Potion (R/P):** Restore 30 HP (limited to 4 uses per character)
 - **Special:** Animated GIF sprite
 
 #### Mage
@@ -85,8 +85,8 @@ Regardless of which class or side, Player 1 always uses Q/W/E/R and Player 2 alw
 - **Abilities:**
   - **Light Attack (Q/U):** Quick, reliable attack (10-14 damage)
   - **Fireball (W/I):** Fiery magical attack with 25% chance to poison (20-25 damage, poison deals 1-5 damage per turn for 3 turns)
-  - **Heal (E/O):** Restore 25 HP to yourself
-  - **Health Potion (R/P):** Restore 30 HP
+  - **Heal (E/O):** Restore 25 HP to yourself (limited to 2 uses per character)
+  - **Health Potion (R/P):** Restore 30 HP (limited to 4 uses per character)
 - **Special:** Animated GIF sprite
 
 #### Ghost
@@ -95,7 +95,7 @@ Regardless of which class or side, Player 1 always uses Q/W/E/R and Player 2 alw
   - **Light Attack (Q/U):** Quick, reliable attack (10-14 damage)
   - **Slash (W/I):** Powerful slash with 25% chance to cause bleeding (15-20 damage)
   - **Confusion (E/O):** Confusing attack that deals 10 damage with 20% chance to grant an extra turn
-  - **Souls (R/P):** Steal the enemy's soul and heal yourself for 30 HP
+  - **Souls (R/P):** Steal the enemy's soul and heal yourself for 30 HP (limited to 2 uses per character)
 - **Special:** Animated GIF sprite and unique extra turn mechanic
 
 ### Status Effects
@@ -110,6 +110,8 @@ Regardless of which class or side, Player 1 always uses Q/W/E/R and Player 2 alw
 - UI automatically adjusts based on character positions
 - Active player's abilities are highlighted in yellow
 - Inactive player's abilities are shown in gray
+- Health potion count is displayed next to the ability name (e.g., "R: Health Potion (3)")
+- Healing ability uses are displayed next to the ability name (e.g., "E: Heal (1)")
 - FPS counter displayed underneath the left health bar
 - Turn indicator shows whose turn it is with colored borders around active player
 

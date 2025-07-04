@@ -56,6 +56,8 @@ class GameCharacter:
         self.y = y
         self.blocking = False
         self.extra_turn = False  # Used for abilities that grant extra turns
+        self.health_potions = 4  # Limited health potions
+        self.healing_uses = 2  # Limited healing ability uses
 
     def take_damage(self, amount):
         if self.blocking:
@@ -183,17 +185,29 @@ def heal_spell(user, target):
     if hasattr(target, 'blocking') and target.blocking:
         target.blocking = False
         return f"{target.name} blocks the move!"
+    
+    # Check if user has healing uses remaining
+    if user.healing_uses <= 0:
+        return f"{user.name} has no healing uses remaining!"
+    
     heal_amount = 25
     user.heal(heal_amount)
-    return f"{user.name} casts Heal and restores {heal_amount} HP!"
+    user.healing_uses -= 1  # Consume one healing use
+    return f"{user.name} casts Heal and restores {heal_amount} HP! ({user.healing_uses} healing uses remaining)"
 
 def health_potion(user, target):
     if hasattr(target, 'blocking') and target.blocking:
         target.blocking = False
         return f"{target.name} blocks the move!"
+    
+    # Check if user has health potions remaining
+    if user.health_potions <= 0:
+        return f"{user.name} has no health potions remaining!"
+    
     heal_amount = 30
     user.heal(heal_amount)
-    return f"{user.name} uses a Health Potion and restores {heal_amount} HP!"
+    user.health_potions -= 1  # Consume one potion
+    return f"{user.name} uses a Health Potion and restores {heal_amount} HP! ({user.health_potions} potions remaining)"
 
 def slash_attack(user, target):
     if hasattr(target, 'blocking') and target.blocking:
@@ -235,9 +249,14 @@ def confusion(user, target):
     return msg
 
 def souls(user, target):
+    # Check if user has healing uses remaining
+    if user.healing_uses <= 0:
+        return f"{user.name} has no healing uses remaining!"
+    
     heal_amount = 30
     user.heal(heal_amount)
-    return f"{user.name} uses Souls! {user.name} steals the enemy's soul and heals for {heal_amount} HP!"
+    user.healing_uses -= 1  # Consume one healing use
+    return f"{user.name} uses Souls! {user.name} steals the enemy's soul and heals for {heal_amount} HP! ({user.healing_uses} healing uses remaining)"
 
 # --- Create Characters and Add Abilities ---
 def create_warrior():

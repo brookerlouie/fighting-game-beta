@@ -642,6 +642,12 @@ while running:
         for i, ability in enumerate(player1.abilities):
             key = player1_keys[i]
             text = f"{key}: {ability.name}"
+            # Add potion count for Health Potion ability
+            if ability.name == "Health Potion":
+                text += f" ({player1.health_potions})"
+            # Add healing uses count for healing abilities
+            elif ability.name in ["Heal", "Souls"]:
+                text += f" ({player1.healing_uses})"
             color = (255, 255, 0) if (player1_class == "warrior" and turn == 1) or (player1_class == "mage" and turn == 1) else (180, 180, 180)
             surf = ability_font.render(text, True, color)
             screen.blit(surf, (padding, ability_y + i * 32))
@@ -658,6 +664,12 @@ while running:
         for i, ability in enumerate(player1.abilities):
             key = player1_keys[i]
             text = f"{key}: {ability.name}"
+            # Add potion count for Health Potion ability
+            if ability.name == "Health Potion":
+                text += f" ({player1.health_potions})"
+            # Add healing uses count for healing abilities
+            elif ability.name in ["Heal", "Souls"]:
+                text += f" ({player1.healing_uses})"
             color = (255, 255, 0) if (player1_class == "warrior" and turn == 1) or (player1_class == "mage" and turn == 1) else (180, 180, 180)
             surf = ability_font.render(text, True, color)
             screen.blit(surf, (WIDTH - surf.get_width() - padding, ability_y + i * 32))
@@ -683,6 +695,12 @@ while running:
         for i, ability in enumerate(player2.abilities):
             key = player2_keys[i]
             text = f"{key}: {ability.name}"
+            # Add potion count for Health Potion ability
+            if ability.name == "Health Potion":
+                text += f" ({player2.health_potions})"
+            # Add healing uses count for healing abilities
+            elif ability.name in ["Heal", "Souls"]:
+                text += f" ({player2.healing_uses})"
             color = (255, 255, 0) if (player2_class == "warrior" and turn == 2) or (player2_class == "mage" and turn == 2) else (180, 180, 180)
             surf = ability_font.render(text, True, color)
             screen.blit(surf, (padding, ability_y + i * 32))
@@ -699,6 +717,12 @@ while running:
         for i, ability in enumerate(player2.abilities):
             key = player2_keys[i]
             text = f"{key}: {ability.name}"
+            # Add potion count for Health Potion ability
+            if ability.name == "Health Potion":
+                text += f" ({player2.health_potions})"
+            # Add healing uses count for healing abilities
+            elif ability.name in ["Heal", "Souls"]:
+                text += f" ({player2.healing_uses})"
             color = (255, 255, 0) if (player2_class == "warrior" and turn == 2) or (player2_class == "mage" and turn == 2) else (180, 180, 180)
             surf = ability_font.render(text, True, color)
             screen.blit(surf, (WIDTH - surf.get_width() - padding, ability_y + i * 32))
