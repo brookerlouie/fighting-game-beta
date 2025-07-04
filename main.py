@@ -13,6 +13,9 @@ import pygame_game.settings as settings
 from pygame_game.settings import get_current_resolution, apply_brightness_to_color, RESOLUTION_OPTIONS, BRIGHTNESS, FULLSCREEN
 from pygame_game.entities import create_warrior, create_mage, create_ghost
 from PIL import Image
+import os
+
+ASSETS_DIR = os.path.join(os.path.dirname(__file__), 'pygame_game', 'assets')
 
 def is_in_range(player1, player2, max_distance):
     dx = player1.x - player2.x
@@ -32,7 +35,8 @@ clock = pygame.time.Clock()
 
 # Load and scale background image to always fill the screen
 try:
-    background = pygame.image.load(r"C:\Users\brook\OneDrive\Desktop\code\Game\pygame_game\assets\tommy-background.png")
+    background_path = os.path.join(ASSETS_DIR, 'tommy-background.png')
+    background = pygame.image.load(background_path)
     background = background.convert()
     original_size = background.get_size()
     print(f"Background loaded successfully. Original size: {original_size}")
@@ -75,22 +79,25 @@ def load_gif_frames(path, size):
     return frames
 
 CHAR_SIZE = 500  # Set this at the top
-# Load and scale player images (optional) using absolute paths
+# Load and scale player images (optional) using relative paths
 try:
-    warrior_img = pygame.image.load(r"C:\Users\brook\OneDrive\Desktop\code\Game\pygame_game\assets\tommy-warrior.png")
+    warrior_path = os.path.join(ASSETS_DIR, 'tommy-warrior.png')
+    warrior_img = pygame.image.load(warrior_path)
     warrior_img = pygame.transform.scale(warrior_img, (CHAR_SIZE, CHAR_SIZE))
 except Exception as e:
     print("Failed to load warrior image:", e)
     warrior_img = None
 try:
-    mage_gif_frames = load_gif_frames(r"C:\Users\brook\OneDrive\Desktop\code\Game\pygame_game\assets\Mage-idle.gif", (CHAR_SIZE, CHAR_SIZE))
+    mage_gif_path = os.path.join(ASSETS_DIR, 'Mage-idle.gif')
+    mage_gif_frames = load_gif_frames(mage_gif_path, (CHAR_SIZE, CHAR_SIZE))
     mage_img = mage_gif_frames[0] if mage_gif_frames else None
 except Exception as e:
     print("Failed to load mage gif:", e)
     mage_gif_frames = []
     mage_img = None
 try:
-    ghost_gif_frames = load_gif_frames(r"C:\Users\brook\OneDrive\Desktop\code\Game\pygame_game\assets\Ghost-idle.gif", (CHAR_SIZE, CHAR_SIZE))
+    ghost_gif_path = os.path.join(ASSETS_DIR, 'Ghost-idle.gif')
+    ghost_gif_frames = load_gif_frames(ghost_gif_path, (CHAR_SIZE, CHAR_SIZE))
     ghost_img = ghost_gif_frames[0] if ghost_gif_frames else None
 except Exception as e:
     print("Failed to load ghost gif:", e)
@@ -194,12 +201,12 @@ def character_selection(player_num, available_classes=None):
     return classes[selected].lower(), name.strip() if name.strip() else classes[selected]
 
 def settings_menu(screen, clock):
-    global WIDTH, HEIGHT, FPS, BRIGHTNESS, CURRENT_RESOLUTION_INDEX, FULLSCREEN
+    global WIDTH, HEIGHT, FPS, BRIGHTNESS, CURRENT_RESOLUTION_INDEX
     global background
     """Settings menu with brightness, resolution, and FPS options"""
     
     selected_option = 0
-    options = ["Brightness", "Resolution", "Fullscreen", "Back"]
+    options = ["Brightness", "Resolution", "Back"]
     done = False
     
     while not done:
@@ -219,38 +226,14 @@ def settings_menu(screen, clock):
                         brightness_menu(screen, clock)
                     elif selected_option == 1:  # Resolution
                         screen = resolution_menu(screen, clock)
-                    elif selected_option == 2:  # Fullscreen
-                        FULLSCREEN = not FULLSCREEN
-                        screen = apply_display_settings(screen)
-                        # Reposition players and UI after resolution/fullscreen change
-                        player1.x = WIDTH // 4 - CHAR_SIZE // 2
-                        player1.y = HEIGHT // 2 - CHAR_SIZE // 2 + OFFSET_Y
-                        player2.x = 3 * WIDTH // 4 - CHAR_SIZE // 2
-                        player2.y = HEIGHT // 2 - CHAR_SIZE // 2 + OFFSET_Y
-                        global ability_y
-                        ability_y = HEIGHT - 120
-                        # Rescale background if needed
-                        if background:
-                            try:
-                                original_size = background.get_size()
-                                if original_size != (WIDTH, HEIGHT):
-                                    background = pygame.transform.smoothscale(background, (WIDTH, HEIGHT))
-                            except Exception:
-                                pass
-                    elif selected_option == 3:  # Back
+                    elif selected_option == 2:  # Back
                         done = True
                 elif event.key == pygame.K_LEFT or event.key == pygame.K_a:
                     if selected_option == 0:  # Brightness
                         BRIGHTNESS = max(0, BRIGHTNESS - 10)
-                    elif selected_option == 2:  # Fullscreen
-                        FULLSCREEN = not FULLSCREEN
-                        screen = apply_display_settings(screen)
                 elif event.key == pygame.K_RIGHT or event.key == pygame.K_d:
                     if selected_option == 0:  # Brightness
                         BRIGHTNESS = min(150, BRIGHTNESS + 10)
-                    elif selected_option == 2:  # Fullscreen
-                        FULLSCREEN = not FULLSCREEN
-                        screen = apply_display_settings(screen)
         
         # Draw settings menu
         screen.fill((20, 20, 40))
@@ -270,8 +253,6 @@ def settings_menu(screen, clock):
             elif option == "Resolution":
                 current_res = get_current_resolution()
                 text += f": {current_res[0]}x{current_res[1]} @ {current_res[2]}fps"
-            elif option == "Fullscreen":
-                text += f": {'ON' if FULLSCREEN else 'OFF'}"
             
             option_surface = option_font.render(text, True, color)
             y_pos = 250 + i * 60
@@ -603,6 +584,18 @@ while running:
         screen.fill((0, 0, 0))
         # Fill the entire screen with the background
         screen.blit(background, (0, 0))
+        # --- Apply brightness overlay ---
+        if BRIGHTNESS != 100:
+            overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+            if BRIGHTNESS < 100:
+                # Darken: overlay black, max alpha 200 at 0%
+                alpha = int(200 * (1 - BRIGHTNESS / 100))
+                overlay.fill((0, 0, 0, alpha))
+            else:
+                # Brighten: overlay white, max alpha 100 at 150%
+                alpha = int(100 * ((BRIGHTNESS - 100) / 50))  # 150% = max white overlay
+                overlay.fill((255, 255, 255, min(alpha, 100)))
+            screen.blit(overlay, (0, 0))
     else:
         # Fallback: solid color background with brightness applied
         bg_color = apply_brightness_to_color((30, 30, 30))
