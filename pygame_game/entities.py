@@ -58,6 +58,7 @@ class GameCharacter:
         self.extra_turn = False  # Used for abilities that grant extra turns
         self.health_potions = 2  # Limited health potions
         self.healing_uses = 2  # Limited healing ability uses
+        self.confusion_animation_triggered = False  # Flag for confusion animation
 
     def take_damage(self, amount):
         if self.blocking:
@@ -244,6 +245,8 @@ def confusion(user, target):
         user.stunned = False  # Ensure not stunned
         msg += f"\n{user.name} is empowered by confusion and gets another turn!"
         user.extra_turn = True
+        # Set flag to trigger confusion animation (will be handled in main loop)
+        user.confusion_animation_triggered = True
     else:
         user.extra_turn = False
     return msg

@@ -68,12 +68,18 @@ def load_gif_frames(path, size):
     try:
         img = Image.open(path)
         n_frames = getattr(img, 'n_frames', 1)
+        print(f"Loading GIF {path}: {n_frames} frames, target size: {size}")
+        
         for frame in range(n_frames):
             img.seek(frame)
+            # Convert to RGBA and resize to target size
             frame_img = img.convert('RGBA').resize(size, Image.Resampling.LANCZOS)
+            # Convert to pygame surface
             data = frame_img.tobytes()
             surface = pygame.image.fromstring(data, frame_img.size, 'RGBA')
             frames.append(surface)
+        
+        print(f"Successfully loaded {len(frames)} frames, first frame size: {frames[0].get_size() if frames else 'None'}")
     except Exception as e:
         print(f"Failed to load GIF {path}: {e}")
     return frames
@@ -97,6 +103,18 @@ except Exception as e:
     print("Failed to load warrior gif:", e)
     warrior_gif_frames = []
     warrior_gif_img = None
+
+# Load ghost confusion animation
+try:
+    ghost_confusion_path = os.path.join(ASSETS_DIR, 'ghost-confusion.gif')
+    ghost_confusion_frames = load_gif_frames(ghost_confusion_path, (CHAR_SIZE, CHAR_SIZE))
+    ghost_confusion_img = ghost_confusion_frames[0] if ghost_confusion_frames else None
+    print(f"Ghost confusion animation loaded: {len(ghost_confusion_frames)} frames")
+except Exception as e:
+    print("Failed to load ghost confusion gif:", e)
+    ghost_confusion_frames = []
+    ghost_confusion_img = None
+
 try:
     mage_gif_path = os.path.join(ASSETS_DIR, 'Mage-idle.gif')
     mage_gif_frames = load_gif_frames(mage_gif_path, (CHAR_SIZE, CHAR_SIZE))
@@ -152,6 +170,12 @@ mage_anim_speed = 6  # frames per second
 ghost_anim_index = 0
 ghost_anim_timer = 0
 ghost_anim_speed = 6  # frames per second
+
+ghost_confusion_anim_index = 0
+ghost_confusion_anim_timer = 0
+ghost_confusion_anim_speed = 6  # frames per second
+ghost_confusion_active = False  # Track if confusion animation is playing
+ghost_confusion_duration = 0  # How long to show confusion animation
 
 def character_selection(player_num, available_classes=None):
     classes = available_classes if available_classes else ["Warrior", "Mage", "Ghost"]
@@ -592,6 +616,16 @@ while running:
             game_over = True
             winner = player1
 
+    # Check for confusion animation triggers
+    if player1.confusion_animation_triggered:
+        ghost_confusion_active = True
+        ghost_confusion_duration = 2000  # Show for 2 seconds
+        player1.confusion_animation_triggered = False
+    elif player2.confusion_animation_triggered:
+        ghost_confusion_active = True
+        ghost_confusion_duration = 2000  # Show for 2 seconds
+        player2.confusion_animation_triggered = False
+
     # Draw background - ensure it completely fills the screen
     if background:
         # Clear screen first to prevent any bleed-through
@@ -728,7 +762,16 @@ while running:
             screen.blit(surf, (WIDTH - surf.get_width() - padding, ability_y + i * 32))
 
     # Draw player 1
-    if player1_class == "warrior" and warrior_gif_frames:
+    if player1_class == "ghost" and ghost_confusion_active and ghost_confusion_frames:
+        confusion_surface = ghost_confusion_frames[ghost_confusion_anim_index]
+        # Center the confusion animation on the character position
+        confusion_x = player1.x + (CHAR_SIZE - confusion_surface.get_width()) // 2
+        confusion_y = player1.y + (CHAR_SIZE - confusion_surface.get_height()) // 2
+        screen.blit(confusion_surface, (confusion_x, confusion_y))
+        # Debug: print size when confusion animation is active
+        if ghost_confusion_duration > 1900:  # Only print once at start
+            print(f"Drawing confusion animation: size {confusion_surface.get_size()}, centered at ({confusion_x}, {confusion_y})")
+    elif player1_class == "warrior" and warrior_gif_frames:
         screen.blit(warrior_gif_frames[warrior_anim_index], (player1.x, player1.y))
     elif player1_class == "mage" and mage_gif_frames:
         screen.blit(mage_gif_frames[mage_anim_index], (player1.x, player1.y))
@@ -738,7 +781,16 @@ while running:
         pygame.draw.rect(screen, (255, 0, 0), (player1.x, player1.y, CHAR_SIZE, CHAR_SIZE))
 
     # Draw player 2
-    if player2_class == "warrior" and warrior_gif_frames:
+    if player2_class == "ghost" and ghost_confusion_active and ghost_confusion_frames:
+        confusion_surface = ghost_confusion_frames[ghost_confusion_anim_index]
+        # Center the confusion animation on the character position
+        confusion_x = player2.x + (CHAR_SIZE - confusion_surface.get_width()) // 2
+        confusion_y = player2.y + (CHAR_SIZE - confusion_surface.get_height()) // 2
+        screen.blit(confusion_surface, (confusion_x, confusion_y))
+        # Debug: print size when confusion animation is active
+        if ghost_confusion_duration > 1900:  # Only print once at start
+            print(f"Drawing confusion animation: size {confusion_surface.get_size()}, centered at ({confusion_x}, {confusion_y})")
+    elif player2_class == "warrior" and warrior_gif_frames:
         screen.blit(warrior_gif_frames[warrior_anim_index], (player2.x, player2.y))
     elif player2_class == "mage" and mage_gif_frames:
         screen.blit(mage_gif_frames[mage_anim_index], (player2.x, player2.y))
@@ -829,6 +881,19 @@ while running:
         if ghost_anim_timer > 1000 // ghost_anim_speed:
             ghost_anim_index = (ghost_anim_index + 1) % len(ghost_gif_frames)
             ghost_anim_timer = 0
+    
+    # Update confusion animation
+    if ghost_confusion_active and ghost_confusion_frames:
+        ghost_confusion_anim_timer += dt
+        if ghost_confusion_anim_timer > 1000 // ghost_confusion_anim_speed:
+            ghost_confusion_anim_index = (ghost_confusion_anim_index + 1) % len(ghost_confusion_frames)
+            ghost_confusion_anim_timer = 0
+        
+        # Check if confusion animation should end
+        ghost_confusion_duration -= dt
+        if ghost_confusion_duration <= 0:
+            ghost_confusion_active = False
+            ghost_confusion_anim_index = 0
 
     # Draw pause menu if game is paused
     if paused and not game_over:
