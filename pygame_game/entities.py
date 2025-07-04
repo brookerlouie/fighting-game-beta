@@ -126,13 +126,22 @@ def heavy_strike(user, target):
     if hasattr(target, 'blocking') and target.blocking:
         target.blocking = False
         return f"{target.name} blocks the move!"
-    damage = 15 + random.randint(5, 15)
+    
+    # Check for stun first to determine damage
+    stun_occurs = random.random() < 0.25  # 25% chance to stun
+    
+    if stun_occurs:
+        damage = 30  # Fixed 30 damage when stun occurs
+    else:
+        damage = 20  # Fixed 20 damage when no stun
+    
     block_msg = target.take_damage(damage)
     if block_msg:
         return f"{user.name} uses Heavy Strike!\n{block_msg}"
     msg = f"{user.name} uses Heavy Strike! {target.name} takes {damage} damage."
-    # 30% chance to stun
-    if random.random() < 0.3:
+    
+    # Apply stun effect if it occurred
+    if stun_occurs:
         stun_effect = StatusEffect(
             name="Stunned",
             duration=1,
@@ -153,18 +162,18 @@ def fireball(user, target):
     if hasattr(target, 'blocking') and target.blocking:
         target.blocking = False
         return f"{target.name} blocks the move!"
-    damage = 20 + random.randint(10, 20)
+    damage = 20 + random.randint(0, 5)
     block_msg = target.take_damage(damage)
     if block_msg:
         return f"{user.name} casts Fireball!\n{block_msg}"
     msg = f"{user.name} casts Fireball! {target.name} takes {damage} damage."
-    # 40% chance to poison
-    if random.random() < 0.4:
+    # 25% chance to poison
+    if random.random() < 0.25:
         poison_effect = StatusEffect(
             name="Poisoned",
             duration=3,
             on_apply=None,
-            on_turn=lambda c: c.take_damage(5),
+            on_turn=lambda c: c.take_damage(random.randint(1, 5)),
             on_expire=None
         )
         msg += f"\n{target.add_status_effect(poison_effect)}"

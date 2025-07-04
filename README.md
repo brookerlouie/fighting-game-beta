@@ -73,16 +73,16 @@ Regardless of which class or side, Player 1 always uses Q/W/E/R and Player 2 alw
 #### Warrior
 - **Health:** 120 HP
 - **Abilities:**
-  - **Light Attack (Q/U):** Quick, reliable attack (8-14 damage)
-  - **Heavy Strike (W/I):** Powerful melee attack with 30% chance to stun (15-30 damage)
+  - **Light Attack (Q/U):** Quick, reliable attack (10-14 damage)
+  - **Heavy Strike (W/I):** Powerful melee attack with 25% chance to stun (20 damage normally, 30 damage when stun occurs)
   - **Block (E/O):** Block the next attack
   - **Health Potion (R/P):** Restore 30 HP
 
 #### Mage
 - **Health:** 80 HP
 - **Abilities:**
-  - **Light Attack (Q/U):** Quick, reliable attack (8-14 damage)
-  - **Fireball (W/I):** Fiery magical attack with 40% chance to poison (20-40 damage)
+  - **Light Attack (Q/U):** Quick, reliable attack (10-14 damage)
+  - **Fireball (W/I):** Fiery magical attack with 25% chance to poison (20-25 damage, poison deals 1-5 damage per turn for 3 turns)
   - **Heal (E/O):** Restore 25 HP to yourself
   - **Health Potion (R/P):** Restore 30 HP
 - **Special:** Animated GIF sprite
@@ -90,9 +90,9 @@ Regardless of which class or side, Player 1 always uses Q/W/E/R and Player 2 alw
 #### Ghost
 - **Health:** 100 HP
 - **Abilities:**
-  - **Light Attack (Q/U):** Quick, reliable attack (8-14 damage)
+  - **Light Attack (Q/U):** Quick, reliable attack (10-14 damage)
   - **Slash (W/I):** Powerful slash with 25% chance to cause bleeding (15-20 damage)
-  - **Confusion (E/O):** Confusing attack that deals 10 damage with 30% chance to grant an extra turn
+  - **Confusion (E/O):** Confusing attack that deals 10 damage with 20% chance to grant an extra turn
   - **Souls (R/P):** Steal the enemy's soul and heal yourself for 30 HP
 - **Special:** Animated GIF sprite and unique extra turn mechanic
 
