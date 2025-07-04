@@ -17,6 +17,7 @@ Game/
       warrior-idle.gif     # Warrior character animated GIF
       Mage-idle.gif        # Mage character animated GIF
       Ghost-idle.gif       # Ghost character animated GIF
+      ghost-confusion.gif  # Ghost confusion animation for extra turns
   README.md
 ```
 
@@ -96,7 +97,7 @@ Regardless of which class or side, Player 1 always uses Q/W/E/R and Player 2 alw
   - **Slash (W/I):** Powerful slash with 25% chance to cause bleeding (15-20 damage)
   - **Confusion (E/O):** Confusing attack that deals 10 damage with 20% chance to grant an extra turn
   - **Souls (R/P):** Steal the enemy's soul and heal yourself for 30 HP (limited to 2 uses per character)
-- **Special:** Animated GIF sprite and unique extra turn mechanic
+- **Special:** Animated GIF sprite, unique extra turn mechanic, and special confusion animation when extra turn is granted
 
 ### Status Effects
 
@@ -147,6 +148,7 @@ Regardless of which class or side, Player 1 always uses Q/W/E/R and Player 2 alw
 ### Animated GIF Support
 - All character classes (Warrior, Mage, Ghost) use animated GIF sprites
 - Smooth animation in both character selection and in-game
+- Special confusion animation for Ghost's extra turn mechanic
 - Uses Pillow library for GIF frame extraction
 - Fallback to static images if GIFs are unavailable
 
