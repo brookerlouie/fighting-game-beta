@@ -56,7 +56,7 @@ class GameCharacter:
         self.y = y
         self.blocking = False
         self.extra_turn = False  # Used for abilities that grant extra turns
-        self.health_potions = 4  # Limited health potions
+        self.health_potions = 2  # Limited health potions
         self.healing_uses = 2  # Limited healing ability uses
 
     def take_damage(self, amount):

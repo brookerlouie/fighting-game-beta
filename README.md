@@ -77,7 +77,7 @@ Regardless of which class or side, Player 1 always uses Q/W/E/R and Player 2 alw
   - **Light Attack (Q/U):** Quick, reliable attack (10-14 damage)
   - **Heavy Strike (W/I):** Powerful melee attack with 25% chance to stun (20 damage normally, 30 damage when stun occurs)
   - **Block (E/O):** Block the next attack
-  - **Health Potion (R/P):** Restore 30 HP (limited to 4 uses per character)
+  - **Health Potion (R/P):** Restore 30 HP (limited to 2 uses per character)
 - **Special:** Animated GIF sprite
 
 #### Mage
@@ -86,7 +86,7 @@ Regardless of which class or side, Player 1 always uses Q/W/E/R and Player 2 alw
   - **Light Attack (Q/U):** Quick, reliable attack (10-14 damage)
   - **Fireball (W/I):** Fiery magical attack with 25% chance to poison (20-25 damage, poison deals 1-5 damage per turn for 3 turns)
   - **Heal (E/O):** Restore 25 HP to yourself (limited to 2 uses per character)
-  - **Health Potion (R/P):** Restore 30 HP (limited to 4 uses per character)
+  - **Health Potion (R/P):** Restore 30 HP (limited to 2 uses per character)
 - **Special:** Animated GIF sprite
 
 #### Ghost
