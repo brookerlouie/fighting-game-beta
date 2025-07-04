@@ -13,7 +13,8 @@ Game/
     __init__.py            # Package exports
     assets/
       tommy-background.png # Background image
-      tommy-warrior.png    # Warrior character image
+      tommy-warrior.png    # Warrior character static image
+      warrior-idle.gif     # Warrior character animated GIF
       Mage-idle.gif        # Mage character animated GIF
       Ghost-idle.gif       # Ghost character animated GIF
   README.md
@@ -38,7 +39,7 @@ Game/
 - Choose between **Warrior**, **Mage**, and **Ghost** for each player
 - Customize character names
 - Each class has unique abilities, stats, and visual effects
-- Animated GIF sprites for Mage and Ghost characters
+- Animated GIF sprites for all character classes
 
 ### Turn-Based Combat
 - Players take turns using abilities
@@ -77,6 +78,7 @@ Regardless of which class or side, Player 1 always uses Q/W/E/R and Player 2 alw
   - **Heavy Strike (W/I):** Powerful melee attack with 25% chance to stun (20 damage normally, 30 damage when stun occurs)
   - **Block (E/O):** Block the next attack
   - **Health Potion (R/P):** Restore 30 HP
+- **Special:** Animated GIF sprite
 
 #### Mage
 - **Health:** 80 HP
@@ -141,7 +143,7 @@ Regardless of which class or side, Player 1 always uses Q/W/E/R and Player 2 alw
 ## Technical Features
 
 ### Animated GIF Support
-- Mage and Ghost characters use animated GIF sprites
+- All character classes (Warrior, Mage, Ghost) use animated GIF sprites
 - Smooth animation in both character selection and in-game
 - Uses Pillow library for GIF frame extraction
 - Fallback to static images if GIFs are unavailable
