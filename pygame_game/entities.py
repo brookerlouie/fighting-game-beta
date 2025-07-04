@@ -190,13 +190,13 @@ def slash_attack(user, target):
     if hasattr(target, 'blocking') and target.blocking:
         target.blocking = False
         return f"{target.name} blocks the move!"
-    damage = 15 + random.randint(5, 15)
+    damage = 10 + random.randint(5, 10)
     block_msg = target.take_damage(damage)
     if block_msg:
         return f"{user.name} uses Slash!\n{block_msg}"
     msg = f"{user.name} uses Slash! {target.name} takes {damage} damage."
-    # 30% chance to bleed
-    if random.random() < 0.3:
+    # 25% chance to bleed
+    if random.random() < 0.25:
         bleed_effect = StatusEffect(
             name="Bleeding",
             duration=5,
@@ -216,8 +216,8 @@ def confusion(user, target):
     if block_msg:
         return f"{user.name} uses Confusion!\n{block_msg}"
     msg = f"{user.name} uses Confusion! {target.name} takes {damage} damage."
-    # 30% chance for extra turn
-    if random.random() < 0.3:
+    # 20% chance for extra turn
+    if random.random() < 0.2:
         user.stunned = False  # Ensure not stunned
         msg += f"\n{user.name} is empowered by confusion and gets another turn!"
         user.extra_turn = True

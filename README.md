@@ -91,7 +91,7 @@ Regardless of which class or side, Player 1 always uses Q/W/E/R and Player 2 alw
 - **Health:** 100 HP
 - **Abilities:**
   - **Light Attack (Q/U):** Quick, reliable attack (8-14 damage)
-  - **Slash (W/I):** Powerful slash with 30% chance to cause bleeding (15-30 damage)
+  - **Slash (W/I):** Powerful slash with 25% chance to cause bleeding (15-20 damage)
   - **Confusion (E/O):** Confusing attack that deals 10 damage with 30% chance to grant an extra turn
   - **Souls (R/P):** Steal the enemy's soul and heal yourself for 30 HP
 - **Special:** Animated GIF sprite and unique extra turn mechanic
