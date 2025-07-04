@@ -99,7 +99,7 @@ Regardless of which class or side, Player 1 always uses Q/W/E/R and Player 2 alw
 ### Status Effects
 
 - **Stunned:** Applied by Warrior's Heavy Strike. Target misses their next turn
-- **Poisoned:** Applied by Mage's Fireball. Target takes 5 damage per turn for 3 turns
+- **Poisoned:** Applied by Mage's Fireball. Target takes 1-5 damage per turn for 3 turns
 - **Bleeding:** Applied by Ghost's Slash. Target takes 1 damage per turn for 5 turns
 
 ### Dynamic UI

@@ -87,6 +87,16 @@ try:
 except Exception as e:
     print("Failed to load warrior image:", e)
     warrior_img = None
+
+# Load warrior animated GIF for in-game use
+try:
+    warrior_gif_path = os.path.join(ASSETS_DIR, 'warrior-idle.gif')
+    warrior_gif_frames = load_gif_frames(warrior_gif_path, (CHAR_SIZE, CHAR_SIZE))
+    warrior_gif_img = warrior_gif_frames[0] if warrior_gif_frames else None
+except Exception as e:
+    print("Failed to load warrior gif:", e)
+    warrior_gif_frames = []
+    warrior_gif_img = None
 try:
     mage_gif_path = os.path.join(ASSETS_DIR, 'Mage-idle.gif')
     mage_gif_frames = load_gif_frames(mage_gif_path, (CHAR_SIZE, CHAR_SIZE))
@@ -131,6 +141,10 @@ winner = None
 paused = False  # Pause menu state
 
 # Animation state
+warrior_anim_index = 0
+warrior_anim_timer = 0
+warrior_anim_speed = 6  # frames per second
+
 mage_anim_index = 0
 mage_anim_timer = 0
 mage_anim_speed = 6  # frames per second
@@ -690,8 +704,8 @@ while running:
             screen.blit(surf, (WIDTH - surf.get_width() - padding, ability_y + i * 32))
 
     # Draw player 1
-    if player1_class == "warrior" and warrior_img:
-        screen.blit(warrior_img, (player1.x, player1.y))
+    if player1_class == "warrior" and warrior_gif_frames:
+        screen.blit(warrior_gif_frames[warrior_anim_index], (player1.x, player1.y))
     elif player1_class == "mage" and mage_gif_frames:
         screen.blit(mage_gif_frames[mage_anim_index], (player1.x, player1.y))
     elif player1_class == "ghost" and ghost_gif_frames:
@@ -700,8 +714,8 @@ while running:
         pygame.draw.rect(screen, (255, 0, 0), (player1.x, player1.y, CHAR_SIZE, CHAR_SIZE))
 
     # Draw player 2
-    if player2_class == "warrior" and warrior_img:
-        screen.blit(warrior_img, (player2.x, player2.y))
+    if player2_class == "warrior" and warrior_gif_frames:
+        screen.blit(warrior_gif_frames[warrior_anim_index], (player2.x, player2.y))
     elif player2_class == "mage" and mage_gif_frames:
         screen.blit(mage_gif_frames[mage_anim_index], (player2.x, player2.y))
     elif player2_class == "ghost" and ghost_gif_frames:
@@ -719,8 +733,8 @@ while running:
         
         # Display winner's character image
         if winner == player1:
-            if player1_class == "warrior" and warrior_img:
-                winner_img = warrior_img
+            if player1_class == "warrior" and warrior_gif_frames:
+                winner_img = warrior_gif_frames[warrior_anim_index]
             elif player1_class == "mage" and mage_gif_frames:
                 winner_img = mage_gif_frames[mage_anim_index]
             elif player1_class == "ghost" and ghost_gif_frames:
@@ -728,8 +742,8 @@ while running:
             else:
                 winner_img = None
         else:  # winner == player2
-            if player2_class == "warrior" and warrior_img:
-                winner_img = warrior_img
+            if player2_class == "warrior" and warrior_gif_frames:
+                winner_img = warrior_gif_frames[warrior_anim_index]
             elif player2_class == "mage" and mage_gif_frames:
                 winner_img = mage_gif_frames[mage_anim_index]
             elif player2_class == "ghost" and ghost_gif_frames:
@@ -776,6 +790,11 @@ while running:
         ability_message = ""
 
     # Update animation timers
+    if warrior_gif_frames:
+        warrior_anim_timer += dt
+        if warrior_anim_timer > 1000 // warrior_anim_speed:
+            warrior_anim_index = (warrior_anim_index + 1) % len(warrior_gif_frames)
+            warrior_anim_timer = 0
     if mage_gif_frames:
         mage_anim_timer += dt
         if mage_anim_timer > 1000 // mage_anim_speed:
