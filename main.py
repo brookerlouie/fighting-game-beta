@@ -463,15 +463,20 @@ def resolution_menu(screen, clock):
             y_pos = 250 + i * 50
             screen.blit(option_surface, (WIDTH // 2 - option_surface.get_width() // 2, y_pos))
         
-        # Instructions
+        # Instructions - position dynamically based on number of resolution options
         instruction_font = pygame.font.SysFont(None, 32)
         instructions = [
             "Use W/S or Up/Down to navigate",
             "Press Enter to apply, ESC to go back"
         ]
+        
+        # Calculate the position after the last resolution option
+        last_option_y = 250 + (len(RESOLUTION_OPTIONS) - 1) * 50
+        instruction_start_y = max(last_option_y + 80, HEIGHT - 100)  # At least 80px after last option, or near bottom
+        
         for i, instruction in enumerate(instructions):
             instruction_surface = instruction_font.render(instruction, True, (150, 150, 150))
-            screen.blit(instruction_surface, (WIDTH // 2 - instruction_surface.get_width() // 2, 500 + i * 30))
+            screen.blit(instruction_surface, (WIDTH // 2 - instruction_surface.get_width() // 2, instruction_start_y + i * 30))
         
         pygame.display.flip()
         clock.tick(30)

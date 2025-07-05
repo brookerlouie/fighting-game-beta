@@ -85,6 +85,13 @@ class GameCharacter:
             self.stunned = False  # Stun wears off after missing a turn
             return f"{self.name} is stunned and misses their turn!"
         if 0 <= index < len(self.abilities):
+            # Check if target is blocking - this should happen for ANY move that targets the blocking character
+            # The block should be consumed by the next move, regardless of what it is
+            if hasattr(target, 'blocking') and target.blocking:
+                target.blocking = False
+                # Only block damage-dealing abilities, but still consume the block
+                if self.abilities[index].is_damage:
+                    return f"{target.name} blocks the move!"
             return self.abilities[index].use(self, target)
         else:
             return f"{self.name} tried to use an unknown ability!"
@@ -114,9 +121,6 @@ class GameCharacter:
 
 # --- Ability Functions ---
 def light_attack(user, target):
-    if hasattr(target, 'blocking') and target.blocking:
-        target.blocking = False
-        return f"{target.name} blocks the move!"
     damage = 8 + random.randint(2, 6)
     block_msg = target.take_damage(damage)
     if block_msg:
@@ -126,10 +130,6 @@ def light_attack(user, target):
 
 
 def heavy_strike(user, target):
-    if hasattr(target, 'blocking') and target.blocking:
-        target.blocking = False
-        return f"{target.name} blocks the move!"
-    
     # Check for stun first to determine damage
     stun_occurs = random.random() < 0.25  # 25% chance to stun
     
@@ -162,9 +162,6 @@ def block_ability(user, target):
     return f"{user.name} is ready to block the next attack!"
 
 def fireball(user, target):
-    if hasattr(target, 'blocking') and target.blocking:
-        target.blocking = False
-        return f"{target.name} blocks the move!"
     damage = 20 + random.randint(0, 5)
     block_msg = target.take_damage(damage)
     if block_msg:
@@ -183,10 +180,6 @@ def fireball(user, target):
     return msg
 
 def heal_spell(user, target):
-    if hasattr(target, 'blocking') and target.blocking:
-        target.blocking = False
-        return f"{target.name} blocks the move!"
-    
     # Check if user has healing uses remaining
     if user.healing_uses <= 0:
         return f"{user.name} has no healing uses remaining!"
@@ -197,10 +190,6 @@ def heal_spell(user, target):
     return f"{user.name} casts Heal and restores {heal_amount} HP! ({user.healing_uses} healing uses remaining)"
 
 def health_potion(user, target):
-    if hasattr(target, 'blocking') and target.blocking:
-        target.blocking = False
-        return f"{target.name} blocks the move!"
-    
     # Check if user has health potions remaining
     if user.health_potions <= 0:
         return f"{user.name} has no health potions remaining!"
@@ -211,9 +200,6 @@ def health_potion(user, target):
     return f"{user.name} uses a Health Potion and restores {heal_amount} HP! ({user.health_potions} potions remaining)"
 
 def slash_attack(user, target):
-    if hasattr(target, 'blocking') and target.blocking:
-        target.blocking = False
-        return f"{target.name} blocks the move!"
     damage = 10 + random.randint(5, 10)
     block_msg = target.take_damage(damage)
     if block_msg:
@@ -232,9 +218,6 @@ def slash_attack(user, target):
     return msg
 
 def confusion(user, target):
-    if hasattr(target, 'blocking') and target.blocking:
-        target.blocking = False
-        return f"{target.name} blocks the move!"
     damage = 10
     block_msg = target.take_damage(damage)
     if block_msg:

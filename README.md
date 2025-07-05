@@ -238,7 +238,7 @@ Regardless of which class or side, Player 1 always uses Q/W/E/R and Player 2 alw
 ### Advanced Ability System
 - Status effects with duration tracking
 - Extra turn mechanics (Ghost's Confusion)
-- Blocking system to counter attacks
+- Blocking system to counter attacks (doesn't block healing abilities)
 - Dynamic targeting based on character class
 
 ### Performance Monitoring
@@ -251,6 +251,7 @@ Regardless of which class or side, Player 1 always uses Q/W/E/R and Player 2 alw
 - Fullscreen/windowed mode support
 - Brightness adjustment with real-time preview
 - Background scaling for different resolutions
+- Adaptive UI positioning for different screen sizes
 
 ### Multiplayer Architecture
 - Client-server architecture for reliable connections
@@ -266,6 +267,14 @@ Regardless of which class or side, Player 1 always uses Q/W/E/R and Player 2 alw
 - Add animated GIFs for new character classes
 - Modify `pygame_game/entities.py` to add new abilities or character classes
 - Customize multiplayer settings in `multiplayer.py`
+
+## Recent Updates & Bug Fixes
+
+### Latest Improvements
+- **Fixed Warrior Block Bug**: Warrior's block ability no longer blocks their own health potion
+- **Improved Resolution Menu**: Instructions now properly positioned without overlapping resolution options
+- **Enhanced Multiplayer**: Added synchronized character selection with real-time class filtering
+- **Better UI Positioning**: Adaptive text positioning for different screen sizes and resolutions
 
 ## Troubleshooting
 
