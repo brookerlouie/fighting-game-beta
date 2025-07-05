@@ -2,6 +2,16 @@
 
 A turn-based two-player fighting game built with Python and pygame. Players take turns using abilities to defeat their opponent in a strategic battle featuring three unique character classes with animated sprites, customizable settings, multiplayer support with character selection, and a modern UI.
 
+## 📋 Quick Navigation
+
+- [How to Run](#how-to-run)
+- [Game Modes](#game-modes)
+- [Multiplayer Features](#multiplayer-features)
+- [Character Classes](#character-classes)
+- [Settings & Customization](#settings--customization)
+- [Troubleshooting](#troubleshooting)
+- **[📖 Detailed Multiplayer Guide](MULTIPLAYER_README.md)**
+
 ## Project Structure
 
 ```
@@ -187,7 +197,7 @@ Regardless of which class or side, Player 1 always uses Q/W/E/R and Player 2 alw
 3. **Character Selection**: Both players choose classes and names
 4. **Game**: Automatic synchronization of turns and actions
 
-For detailed multiplayer setup instructions, see `MULTIPLAYER_README.md`.
+**📖 [Detailed Multiplayer Setup Guide](MULTIPLAYER_README.md)** - Complete instructions for multiplayer setup, troubleshooting, and advanced configuration.
 
 ## Settings & Customization
 
