@@ -14,6 +14,7 @@ from pygame_game.settings import get_current_resolution, apply_brightness_to_col
 from pygame_game.entities import create_warrior, create_mage, create_ghost
 from PIL import Image
 import os
+from multiplayer_ui import MultiplayerUI
 
 ASSETS_DIR = os.path.join(os.path.dirname(__file__), 'pygame_game', 'assets')
 
@@ -61,7 +62,32 @@ except Exception as e:
     print("Failed to load background image:", e)
     print("Trying fallback background...")
     background = None
+
+# Load title screen background
+try:
+    title_bg_path = os.path.join(ASSETS_DIR, 'titlescreen.jpg')
+    title_background = pygame.image.load(title_bg_path)
+    title_background = title_background.convert()
     
+    # Better quality scaling for title screen background
+    original_size = title_background.get_size()
+    if original_size[0] < WIDTH or original_size[1] < HEIGHT:
+        print("Title screen image is small - using high-quality scaling...")
+        # Scale up to 2x the target size first for better quality
+        temp_width = WIDTH * 2
+        temp_height = HEIGHT * 2
+        title_background = pygame.transform.smoothscale(title_background, (temp_width, temp_height))
+        # Then scale down to final size
+        title_background = pygame.transform.smoothscale(title_background, (WIDTH, HEIGHT))
+    else:
+        # Direct scale down for large images
+        title_background = pygame.transform.smoothscale(title_background, (WIDTH, HEIGHT))
+    
+    print(f"Title screen background loaded successfully: {title_background.get_size()}")
+except Exception as e:
+    print("Failed to load title screen background:", e)
+    title_background = None
+
 # Utility to load animated GIF frames as pygame surfaces
 def load_gif_frames(path, size):
     frames = []
@@ -404,11 +430,7 @@ def resolution_menu(screen, clock):
                     WIDTH, HEIGHT, FPS = new_width, new_height, new_fps
                     
                     screen = apply_display_settings(screen)
-                    # Reposition players and UI after resolution/fullscreen change
-                    player1.x = WIDTH // 4 - CHAR_SIZE // 2
-                    player1.y = HEIGHT // 2 - CHAR_SIZE // 2 + OFFSET_Y
-                    player2.x = 3 * WIDTH // 4 - CHAR_SIZE // 2
-                    player2.y = HEIGHT // 2 - CHAR_SIZE // 2 + OFFSET_Y
+                    # Update UI positioning after resolution/fullscreen change
                     global ability_y
                     ability_y = HEIGHT - 120
                     # Rescale background if needed
@@ -472,10 +494,157 @@ def apply_display_settings(screen):
     pygame.display.set_caption("Fighting Game")
     return screen
 
+def title_screen(screen, clock):
+    """Title screen with main menu options"""
+    selected_option = 0
+    menu_options = ["Play!", "Play with Others", "Settings", "Exit"]
+    done = False
+    multiplayer_data = None  # Initialize multiplayer data variable
+    
+    while not done:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    pygame.quit()
+                    sys.exit()
+                elif event.key == pygame.K_UP or event.key == pygame.K_w:
+                    selected_option = (selected_option - 1) % len(menu_options)
+                elif event.key == pygame.K_DOWN or event.key == pygame.K_s:
+                    selected_option = (selected_option + 1) % len(menu_options)
+                elif event.key == pygame.K_RETURN:
+                    if selected_option == 0:  # Play!
+                        done = True
+                    elif selected_option == 1:  # Play with Others
+                        # Initialize multiplayer UI
+                        multiplayer_ui = MultiplayerUI(screen, clock, WIDTH, HEIGHT)
+                        result = multiplayer_ui.show_multiplayer_menu()
+                        if isinstance(result, dict) and result.get("type") == "start_game":
+                            # Multiplayer character selection completed
+                            print("Multiplayer game starting with character selection...")
+                            # Store multiplayer data for use in game
+                            multiplayer_data = result
+                            done = True  # Exit title screen and start game
+                        elif result == "start_game":
+                            # Legacy start_game (shouldn't happen with new system)
+                            print("Multiplayer game starting...")
+                            done = True  # Exit title screen and start game
+                        elif result == "back":
+                            # Return to title screen
+                            pass
+                    elif selected_option == 2:  # Settings
+                        screen = settings_menu(screen, clock)
+                    elif selected_option == 3:  # Exit
+                        pygame.quit()
+                        sys.exit()
+        
+        # Draw title screen
+        try:
+            # Load and display tommy background
+            tommy_bg_path = os.path.join(ASSETS_DIR, 'tommy-background.png')
+            tommy_background = pygame.image.load(tommy_bg_path)
+            tommy_background = pygame.transform.smoothscale(tommy_background, (WIDTH, HEIGHT))
+            screen.blit(tommy_background, (0, 0))
+            
+            # Add a semi-transparent tint overlay for better text readability
+            tint_overlay = pygame.Surface((WIDTH, HEIGHT))
+            tint_overlay.set_alpha(80)  # Semi-transparent
+            tint_overlay.fill((100, 150, 255))  # Light blue tint
+            screen.blit(tint_overlay, (0, 0))
+        except Exception as e:
+            print("Failed to load tommy background:", e)
+            screen.fill((100, 150, 255))  # Light blue fallback background
+        
+        # Draw title
+        title_font = pygame.font.Font(None, 120)
+        title_text = title_font.render("Fantasy Fight", True, (255, 255, 255))
+        title_rect = title_text.get_rect(center=(WIDTH // 2, HEIGHT // 4))
+        
+        # Add shadow effect for title
+        title_shadow = title_font.render("Fantasy Fight", True, (0, 0, 0))
+        title_shadow_rect = title_shadow.get_rect(center=(WIDTH // 2 + 3, HEIGHT // 4 + 3))
+        screen.blit(title_shadow, title_shadow_rect)
+        screen.blit(title_text, title_rect)
+        
+        # Menu options
+        menu_font = pygame.font.Font(None, 60)
+        menu_y_start = HEIGHT // 2
+        menu_spacing = 80
+        
+        for i, option in enumerate(menu_options):
+            y_pos = menu_y_start + i * menu_spacing
+            
+            # Set default text color
+            text_color = (255, 255, 255)  # White text
+            
+            # Highlight selected option
+            if i == selected_option:
+                text_color = (255, 255, 0)  # Bright yellow for selected
+            
+            # Render text with shadow for better visibility
+            button_text = menu_font.render(option, True, text_color)
+            text_shadow = menu_font.render(option, True, (0, 0, 0))
+            
+            # Position text
+            button_rect = button_text.get_rect(center=(WIDTH // 2, y_pos))
+            shadow_rect = text_shadow.get_rect(center=(WIDTH // 2 + 2, y_pos + 2))
+            
+            # Draw shadow first, then text
+            screen.blit(text_shadow, shadow_rect)
+            screen.blit(button_text, button_rect)
+        
+        # Instructions
+        instruction_font = pygame.font.Font(None, 36)
+        instructions = [
+            "Use W/S or Up/Down to navigate",
+            "Press Enter to select",
+            "Multiplayer requires lobby server (python lobby_server.py)"
+        ]
+        for i, instruction in enumerate(instructions):
+            # Add shadow for better visibility
+            instruction_shadow = instruction_font.render(instruction, True, (0, 0, 0))
+            instruction_surface = instruction_font.render(instruction, True, (50, 50, 50))
+            
+            shadow_pos = (WIDTH // 2 - instruction_shadow.get_width() // 2 + 1, HEIGHT - 120 + i * 35 + 1)
+            text_pos = (WIDTH // 2 - instruction_surface.get_width() // 2, HEIGHT - 120 + i * 35)
+            
+            screen.blit(instruction_shadow, shadow_pos)
+            screen.blit(instruction_surface, text_pos)
+        
+        pygame.display.flip()
+        clock.tick(30)
+    
+    return screen, multiplayer_data
+
+# --- Title Screen ---
+screen, multiplayer_data = title_screen(screen, clock)
+
 # --- Character selection for both players ---
-player1_class, player1_name = character_selection(1)
-remaining_classes = [cls for cls in ["Warrior", "Mage", "Ghost"] if cls.lower() != player1_class.lower()]
-player2_class, player2_name = character_selection(2, available_classes=remaining_classes)
+# Check if we have multiplayer data from character selection
+if multiplayer_data is not None:
+    # Use multiplayer character selection data
+    player1_class = multiplayer_data["player_class"].lower()
+    player1_name = multiplayer_data["player_name"]
+    is_host = multiplayer_data["is_host"]
+    
+    # For multiplayer, we need to determine player 2's info
+    # This would ideally come from the other player's selection
+    # For now, we'll use defaults and let the multiplayer system handle it
+    if is_host:
+        # Host is player 1, guest is player 2
+        player2_class = "warrior"  # Default, will be overridden by actual selection
+        player2_name = "Player 2"  # Default, will be overridden by actual selection
+    else:
+        # Guest is player 1, host is player 2
+        player2_class = "warrior"  # Default, will be overridden by actual selection
+        player2_name = "Player 2"  # Default, will be overridden by actual selection
+else:
+    # Single player mode - use local character selection
+    player1_class, player1_name = character_selection(1)
+    remaining_classes = [cls for cls in ["Warrior", "Mage", "Ghost"] if cls.lower() != player1_class.lower()]
+    player2_class, player2_name = character_selection(2, available_classes=remaining_classes)
 
 OFFSET_Y = -40  # Negative value moves characters up
 
