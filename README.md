@@ -31,6 +31,7 @@ Game/
       Mage-idle.gif        # Mage character animated GIF
       Ghost-idle.gif       # Ghost character animated GIF
       ghost-confusion.gif  # Ghost confusion animation for extra turns
+      Ghost-lightattack.gif # Ghost light attack animation
       titlescreen.jpg      # Title screen background
   README.md
   MULTIPLAYER_README.md    # Detailed multiplayer setup guide
@@ -131,9 +132,9 @@ Regardless of which class or side, Player 1 always uses Q/W/E/R and Player 2 alw
 - **Abilities:**
   - **Light Attack (Q/U):** Quick, reliable attack (10-14 damage)
   - **Heavy Strike (W/I):** Powerful melee attack with 25% chance to stun (20 damage normally, 30 damage when stun occurs)
-  - **Block (E/O):** Block the next attack
+  - **Block (E/O):** Block the next attack (consumed by next move, only blocks damage)
   - **Health Potion (R/P):** Restore 30 HP (limited to 2 uses per character)
-- **Special:** Animated GIF sprite
+- **Special:** Animated GIF sprite with automatic directional flipping based on position
 
 #### Mage
 - **Health:** 80 HP
@@ -147,11 +148,11 @@ Regardless of which class or side, Player 1 always uses Q/W/E/R and Player 2 alw
 #### Ghost
 - **Health:** 100 HP
 - **Abilities:**
-  - **Light Attack (Q/U):** Quick, reliable attack (10-14 damage)
+  - **Light Attack (Q/U):** Quick, reliable attack (10-14 damage) with special attack animation
   - **Slash (W/I):** Powerful slash with 25% chance to cause bleeding (15-20 damage)
   - **Confusion (E/O):** Confusing attack that deals 10 damage with 20% chance to grant an extra turn
   - **Souls (R/P):** Steal the enemy's soul and heal yourself for 30 HP (limited to 2 uses per character)
-- **Special:** Animated GIF sprite, unique extra turn mechanic, and special confusion animation when extra turn is granted
+- **Special:** Animated GIF sprite, unique extra turn mechanic, special confusion animation when extra turn is granted, and dedicated light attack animation
 
 ### Status Effects
 
@@ -232,14 +233,17 @@ Regardless of which class or side, Player 1 always uses Q/W/E/R and Player 2 alw
 - All character classes (Warrior, Mage, Ghost) use animated GIF sprites
 - Smooth animation in both character selection and in-game
 - Special confusion animation for Ghost's extra turn mechanic
+- **Ghost Light Attack Animation**: Dedicated attack animation that plays for 1.5 seconds and delays turn switching
+- **Warrior Directional Animation**: Automatically flips horizontally based on position (faces enemy)
 - Uses Pillow library for GIF frame extraction
 - Fallback to static images if GIFs are unavailable
 
 ### Advanced Ability System
 - Status effects with duration tracking
 - Extra turn mechanics (Ghost's Confusion)
-- Blocking system to counter attacks (doesn't block healing abilities)
+- **Improved Blocking System**: Block is consumed by next move but only blocks damage (healing abilities work normally)
 - Dynamic targeting based on character class
+- **Animation-Integrated Abilities**: Special animations for abilities like Ghost's light attack
 
 ### Performance Monitoring
 - Real-time FPS counter
@@ -275,6 +279,9 @@ Regardless of which class or side, Player 1 always uses Q/W/E/R and Player 2 alw
 - **Improved Resolution Menu**: Instructions now properly positioned without overlapping resolution options
 - **Enhanced Multiplayer**: Added synchronized character selection with real-time class filtering
 - **Better UI Positioning**: Adaptive text positioning for different screen sizes and resolutions
+- **Ghost Light Attack Animation**: Added dedicated attack animation that plays for 1.5 seconds and delays turn switching
+- **Warrior Directional Animation**: Warrior automatically faces the enemy by flipping horizontally based on position
+- **Improved Blocking System**: Block is consumed by any move but only blocks damage (healing abilities work normally)
 
 ## Troubleshooting
 

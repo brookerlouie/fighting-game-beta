@@ -158,6 +158,17 @@ except Exception as e:
     ghost_gif_frames = []
     ghost_img = None
 
+# Load ghost light attack animation
+try:
+    ghost_lightattack_path = os.path.join(ASSETS_DIR, 'Ghost-lightattack.gif')
+    ghost_lightattack_frames = load_gif_frames(ghost_lightattack_path, (CHAR_SIZE, CHAR_SIZE))
+    ghost_lightattack_img = ghost_lightattack_frames[0] if ghost_lightattack_frames else None
+    print(f"Ghost light attack animation loaded: {len(ghost_lightattack_frames)} frames")
+except Exception as e:
+    print("Failed to load ghost light attack gif:", e)
+    ghost_lightattack_frames = []
+    ghost_lightattack_img = None
+
 font = pygame.font.SysFont(None, 64)
 small_font = pygame.font.SysFont(None, 36)
 name_font = pygame.font.SysFont(None, 48)
@@ -202,6 +213,13 @@ ghost_confusion_anim_timer = 0
 ghost_confusion_anim_speed = 6  # frames per second
 ghost_confusion_active = False  # Track if confusion animation is playing
 ghost_confusion_duration = 0  # How long to show confusion animation
+
+# Ghost light attack animation state
+ghost_lightattack_anim_index = 0
+ghost_lightattack_anim_timer = 0
+ghost_lightattack_anim_speed = 6  # frames per second
+ghost_lightattack_active = False  # Track if light attack animation is playing
+ghost_lightattack_duration = 0  # How long to show light attack animation
 
 def character_selection(player_num, available_classes=None):
     classes = available_classes if available_classes else ["Warrior", "Mage", "Ghost"]
@@ -722,7 +740,13 @@ while running:
                         result = player1.use_ability(0, player2)
                         ability_message = result
                         message_timer = 120
-                        turn = 2  # Switch to Player 2's turn
+                        # Trigger ghost light attack animation if player1 is ghost
+                        if player1_class == "ghost":
+                            ghost_lightattack_active = True
+                            ghost_lightattack_duration = 1500  # Show for 1.5 seconds
+                        # Only switch turn if ghost light attack animation is not active
+                        if not ghost_lightattack_active:
+                            turn = 2  # Switch to Player 2's turn
                     if event.key == pygame.K_w:
                         result = player1.use_ability(1, player2)
                         ability_message = result
@@ -756,7 +780,13 @@ while running:
                         result = player2.use_ability(0, player1)
                         ability_message = result
                         message_timer = 120
-                        turn = 1  # Switch to Player 1's turn
+                        # Trigger ghost light attack animation if player2 is ghost
+                        if player2_class == "ghost":
+                            ghost_lightattack_active = True
+                            ghost_lightattack_duration = 1500  # Show for 1.5 seconds
+                        # Only switch turn if ghost light attack animation is not active
+                        if not ghost_lightattack_active:
+                            turn = 1  # Switch to Player 1's turn
                     if event.key == pygame.K_i:
                         result = player2.use_ability(1, player1)
                         ability_message = result
@@ -936,7 +966,13 @@ while running:
             screen.blit(surf, (WIDTH - surf.get_width() - padding, ability_y + i * 32))
 
     # Draw player 1
-    if player1_class == "ghost" and ghost_confusion_active and ghost_confusion_frames:
+    if player1_class == "ghost" and ghost_lightattack_active and ghost_lightattack_frames:
+        lightattack_surface = ghost_lightattack_frames[ghost_lightattack_anim_index]
+        # Center the light attack animation on the character position
+        lightattack_x = player1.x + (CHAR_SIZE - lightattack_surface.get_width()) // 2
+        lightattack_y = player1.y + (CHAR_SIZE - lightattack_surface.get_height()) // 2
+        screen.blit(lightattack_surface, (lightattack_x, lightattack_y))
+    elif player1_class == "ghost" and ghost_confusion_active and ghost_confusion_frames:
         confusion_surface = ghost_confusion_frames[ghost_confusion_anim_index]
         # Center the confusion animation on the character position
         confusion_x = player1.x + (CHAR_SIZE - confusion_surface.get_width()) // 2
@@ -946,7 +982,14 @@ while running:
         if ghost_confusion_duration > 1900:  # Only print once at start
             print(f"Drawing confusion animation: size {confusion_surface.get_size()}, centered at ({confusion_x}, {confusion_y})")
     elif player1_class == "warrior" and warrior_gif_frames:
-        screen.blit(warrior_gif_frames[warrior_anim_index], (player1.x, player1.y))
+        # Check if player1 is on the right side (should face left)
+        if player1.x > WIDTH // 2:
+            # Flip the warrior animation horizontally for player1 on the right
+            flipped_warrior = pygame.transform.flip(warrior_gif_frames[warrior_anim_index], True, False)
+            screen.blit(flipped_warrior, (player1.x, player1.y))
+        else:
+            # Normal orientation for player1 on the left
+            screen.blit(warrior_gif_frames[warrior_anim_index], (player1.x, player1.y))
     elif player1_class == "mage" and mage_gif_frames:
         screen.blit(mage_gif_frames[mage_anim_index], (player1.x, player1.y))
     elif player1_class == "ghost" and ghost_gif_frames:
@@ -955,7 +998,13 @@ while running:
         pygame.draw.rect(screen, (255, 0, 0), (player1.x, player1.y, CHAR_SIZE, CHAR_SIZE))
 
     # Draw player 2
-    if player2_class == "ghost" and ghost_confusion_active and ghost_confusion_frames:
+    if player2_class == "ghost" and ghost_lightattack_active and ghost_lightattack_frames:
+        lightattack_surface = ghost_lightattack_frames[ghost_lightattack_anim_index]
+        # Center the light attack animation on the character position
+        lightattack_x = player2.x + (CHAR_SIZE - lightattack_surface.get_width()) // 2
+        lightattack_y = player2.y + (CHAR_SIZE - lightattack_surface.get_height()) // 2
+        screen.blit(lightattack_surface, (lightattack_x, lightattack_y))
+    elif player2_class == "ghost" and ghost_confusion_active and ghost_confusion_frames:
         confusion_surface = ghost_confusion_frames[ghost_confusion_anim_index]
         # Center the confusion animation on the character position
         confusion_x = player2.x + (CHAR_SIZE - confusion_surface.get_width()) // 2
@@ -965,7 +1014,14 @@ while running:
         if ghost_confusion_duration > 1900:  # Only print once at start
             print(f"Drawing confusion animation: size {confusion_surface.get_size()}, centered at ({confusion_x}, {confusion_y})")
     elif player2_class == "warrior" and warrior_gif_frames:
-        screen.blit(warrior_gif_frames[warrior_anim_index], (player2.x, player2.y))
+        # Check if player2 is on the right side (should face left)
+        if player2.x > WIDTH // 2:
+            # Flip the warrior animation horizontally for player2 on the right
+            flipped_warrior = pygame.transform.flip(warrior_gif_frames[warrior_anim_index], True, False)
+            screen.blit(flipped_warrior, (player2.x, player2.y))
+        else:
+            # Normal orientation for player2 on the left
+            screen.blit(warrior_gif_frames[warrior_anim_index], (player2.x, player2.y))
     elif player2_class == "mage" and mage_gif_frames:
         screen.blit(mage_gif_frames[mage_anim_index], (player2.x, player2.y))
     elif player2_class == "ghost" and ghost_gif_frames:
@@ -984,6 +1040,7 @@ while running:
         # Display winner's character image
         if winner == player1:
             if player1_class == "warrior" and warrior_gif_frames:
+                # For victory screen, always show warrior facing forward (not flipped)
                 winner_img = warrior_gif_frames[warrior_anim_index]
             elif player1_class == "mage" and mage_gif_frames:
                 winner_img = mage_gif_frames[mage_anim_index]
@@ -993,6 +1050,7 @@ while running:
                 winner_img = None
         else:  # winner == player2
             if player2_class == "warrior" and warrior_gif_frames:
+                # For victory screen, always show warrior facing forward (not flipped)
                 winner_img = warrior_gif_frames[warrior_anim_index]
             elif player2_class == "mage" and mage_gif_frames:
                 winner_img = mage_gif_frames[mage_anim_index]
@@ -1068,6 +1126,24 @@ while running:
         if ghost_confusion_duration <= 0:
             ghost_confusion_active = False
             ghost_confusion_anim_index = 0
+
+    # Update ghost light attack animation
+    if ghost_lightattack_active and ghost_lightattack_frames:
+        ghost_lightattack_anim_timer += dt
+        if ghost_lightattack_anim_timer > 1000 // ghost_lightattack_anim_speed:
+            ghost_lightattack_anim_index = (ghost_lightattack_anim_index + 1) % len(ghost_lightattack_frames)
+            ghost_lightattack_anim_timer = 0
+        
+        # Check if light attack animation should end
+        ghost_lightattack_duration -= dt
+        if ghost_lightattack_duration <= 0:
+            ghost_lightattack_active = False
+            ghost_lightattack_anim_index = 0
+            # Switch turn when animation finishes
+            if turn == 1:
+                turn = 2
+            elif turn == 2:
+                turn = 1
 
     # Draw pause menu if game is paused
     if paused and not game_over:
