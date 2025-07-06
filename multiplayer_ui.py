@@ -1,6 +1,7 @@
 import pygame
 import sys
 from multiplayer import MultiplayerClient
+from network_config import get_server_host, get_server_port
 
 class MultiplayerUI:
     def __init__(self, screen, clock, width, height):
@@ -8,7 +9,7 @@ class MultiplayerUI:
         self.clock = clock
         self.width = width
         self.height = height
-        self.client = MultiplayerClient()
+        self.client = MultiplayerClient(server_host=get_server_host(), server_port=get_server_port())
         self.font_large = pygame.font.Font(None, 72)
         self.font_medium = pygame.font.Font(None, 48)
         self.font_small = pygame.font.Font(None, 36)
