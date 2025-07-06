@@ -7,12 +7,12 @@ LOCAL_PORT = 5555
 
 # For Hamachi VPN play (cross-network)
 # Replace 'YOUR_HAMACHI_IP' with your actual Hamachi IP address
-HAMACHI_HOST = 'YOUR_HAMACHI_IP'  # e.g., '25.0.0.10'
+HAMACHI_HOST = '25.54.132.81'  # Your Hamachi IP address
 HAMACHI_PORT = 5555
 
 # Current connection mode
 # Set to 'local' for same network, 'hamachi' for VPN
-CONNECTION_MODE = 'local'
+CONNECTION_MODE = 'hamachi'
 
 def get_server_config():
     """Get the current server configuration based on connection mode"""
