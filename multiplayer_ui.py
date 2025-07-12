@@ -381,6 +381,7 @@ class MultiplayerUI:
         waiting_message = "Waiting for player to join..." if is_host else "Waiting for host to start..."
         guest_name = None
         can_start = False
+        start_button_rect = pygame.Rect(self.width // 2 - 120, 460, 240, 60)
         
         while True:
             for event in pygame.event.get():
@@ -393,6 +394,9 @@ class MultiplayerUI:
                         return "back"
                     if is_host and can_start and event.key == pygame.K_RETURN:
                         # Host starts the game
+                        return self.multiplayer_character_selection(lobby_code, player_name, is_host)
+                elif event.type == pygame.MOUSEBUTTONDOWN and is_host and can_start:
+                    if start_button_rect.collidepoint(event.pos):
                         return self.multiplayer_character_selection(lobby_code, player_name, is_host)
             
             # Check for pending actions (like guest joined)
@@ -437,9 +441,11 @@ class MultiplayerUI:
             # Draw waiting message or start button
             if is_host:
                 if guest_name:
-                    start_text = self.font_medium.render("Press Enter to Start!", True, (255, 255, 0))
-                    start_rect = start_text.get_rect(center=(self.width // 2, 430))
-                    self.screen.blit(start_text, start_rect)
+                    # Draw start button
+                    pygame.draw.rect(self.screen, (0, 200, 0), start_button_rect, border_radius=12)
+                    start_label = self.font_medium.render("Start Game", True, (255, 255, 255))
+                    label_rect = start_label.get_rect(center=start_button_rect.center)
+                    self.screen.blit(start_label, label_rect)
                 else:
                     wait_text = self.font_medium.render(waiting_message, True, (255, 255, 255))
                     wait_rect = wait_text.get_rect(center=(self.width // 2, 430))
@@ -455,7 +461,7 @@ class MultiplayerUI:
                 "ESC to leave lobby"
             ]
             if is_host and guest_name:
-                instructions.insert(0, "Press Enter to start the game")
+                instructions.insert(0, "Click the button or press Enter to start the game")
             for i, instruction in enumerate(instructions):
                 text = self.font_small.render(instruction, True, (50, 50, 50))
                 text_rect = text.get_rect(center=(self.width // 2, self.height - 100 + i * 40))
