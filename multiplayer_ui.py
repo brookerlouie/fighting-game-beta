@@ -379,21 +379,31 @@ class MultiplayerUI:
     def waiting_lobby_screen(self, lobby_code, player_name, is_host):
         """Screen shown while waiting for other player"""
         waiting_message = "Waiting for player to join..." if is_host else "Waiting for host to start..."
+        guest_name = None
+        can_start = False
         
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
-                elif event.key == pygame.K_ESCAPE:
-                    self.client.leave_lobby()
-                    return "back"
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        self.client.leave_lobby()
+                        return "back"
+                    if is_host and can_start and event.key == pygame.K_RETURN:
+                        # Host starts the game
+                        return self.multiplayer_character_selection(lobby_code, player_name, is_host)
             
             # Check for pending actions (like guest joined)
             actions = self.client.get_pending_actions()
             for action in actions:
                 if action.get('type') == 'guest_joined':
-                    return self.multiplayer_character_selection(lobby_code, player_name, is_host)  # Go to character selection
+                    guest_name = action.get('guest_name')
+                    can_start = True
+                elif action.get('type') == 'player_left':
+                    guest_name = None
+                    can_start = False
             
             # Draw background
             self.screen.fill((100, 150, 255))
@@ -414,16 +424,34 @@ class MultiplayerUI:
             player_rect = player_text.get_rect(center=(self.width // 2, 320))
             self.screen.blit(player_text, player_rect)
             
-            # Draw waiting message
-            wait_text = self.font_medium.render(waiting_message, True, (255, 255, 255))
-            wait_rect = wait_text.get_rect(center=(self.width // 2, 400))
-            self.screen.blit(wait_text, wait_rect)
+            # Draw guest info if present
+            if is_host and guest_name:
+                guest_text = self.font_medium.render(f"Guest: {guest_name}", True, (0, 255, 0))
+                guest_rect = guest_text.get_rect(center=(self.width // 2, 370))
+                self.screen.blit(guest_text, guest_rect)
+            
+            # Draw waiting message or start button
+            if is_host:
+                if guest_name:
+                    start_text = self.font_medium.render("Press Enter to Start!", True, (255, 255, 0))
+                    start_rect = start_text.get_rect(center=(self.width // 2, 430))
+                    self.screen.blit(start_text, start_rect)
+                else:
+                    wait_text = self.font_medium.render(waiting_message, True, (255, 255, 255))
+                    wait_rect = wait_text.get_rect(center=(self.width // 2, 430))
+                    self.screen.blit(wait_text, wait_rect)
+            else:
+                wait_text = self.font_medium.render(waiting_message, True, (255, 255, 255))
+                wait_rect = wait_text.get_rect(center=(self.width // 2, 430))
+                self.screen.blit(wait_text, wait_rect)
             
             # Instructions
             instructions = [
                 "Share the 4-digit lobby code with your friend",
                 "ESC to leave lobby"
             ]
+            if is_host and guest_name:
+                instructions.insert(0, "Press Enter to start the game")
             for i, instruction in enumerate(instructions):
                 text = self.font_small.render(instruction, True, (50, 50, 50))
                 text_rect = text.get_rect(center=(self.width // 2, self.height - 100 + i * 40))
