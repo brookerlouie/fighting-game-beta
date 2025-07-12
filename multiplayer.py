@@ -395,9 +395,16 @@ class MultiplayerClient:
         try:
             print(f"[CLIENT] Sending: {message}")
             self.socket.send(json.dumps(message).encode('utf-8'))
-            data = self.socket.recv(1024).decode('utf-8')
-            print(f"[CLIENT] Received: {data}")
-            return json.loads(data) if data else None
+            
+            # For certain message types, we expect an immediate response
+            if message.get('type') in ['create_lobby', 'join_lobby', 'get_lobbies', 'leave_lobby']:
+                data = self.socket.recv(1024).decode('utf-8')
+                print(f"[CLIENT] Received: {data}")
+                return json.loads(data) if data else None
+            else:
+                # For other messages, don't wait for response
+                return {'status': 'sent'}
+                
         except socket.timeout:
             print("[CLIENT] Socket timeout waiting for server response!")
             return None
@@ -428,14 +435,22 @@ class MultiplayerClient:
     def handle_message(self, message: Dict):
         """Handle incoming messages"""
         msg_type = message.get('type')
+        print(f"[CLIENT DEBUG] Handling message: {message}")
         
         if msg_type == 'guest_joined':
             print(f"Guest joined: {message.get('guest_name')}")
+            # Add to game actions queue so UI can process it
+            self.game_actions.append(message)
+            print(f"[CLIENT DEBUG] Added guest_joined to game_actions, queue now has {len(self.game_actions)} items")
         elif msg_type == 'player_left':
             print("Other player left the game")
+            # Add to game actions queue so UI can process it
+            self.game_actions.append(message)
+            print(f"[CLIENT DEBUG] Added player_left to game_actions, queue now has {len(self.game_actions)} items")
         elif msg_type == 'game_action':
             # Add to game actions queue
             self.game_actions.append(message)
+            print(f"[CLIENT DEBUG] Added game_action to game_actions, queue now has {len(self.game_actions)} items")
             
     def get_pending_actions(self) -> List[Dict]:
         """Get and clear pending game actions"""

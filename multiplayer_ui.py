@@ -397,13 +397,17 @@ class MultiplayerUI:
             
             # Check for pending actions (like guest joined)
             actions = self.client.get_pending_actions()
+            print(f"[DEBUG] Got {len(actions)} pending actions: {actions}")
             for action in actions:
+                print(f"[DEBUG] Processing action: {action}")
                 if action.get('type') == 'guest_joined':
                     guest_name = action.get('guest_name')
                     can_start = True
+                    print(f"[DEBUG] Guest joined: {guest_name}, can_start: {can_start}")
                 elif action.get('type') == 'player_left':
                     guest_name = None
                     can_start = False
+                    print(f"[DEBUG] Player left, can_start: {can_start}")
             
             # Draw background
             self.screen.fill((100, 150, 255))
