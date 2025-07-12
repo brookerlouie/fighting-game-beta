@@ -79,22 +79,38 @@ class LobbyManager:
                     print(f"Error handling client {address}: {e}")
                     break
         finally:
-            # Clean up lobby if this client was a host or guest
-            if lobby_code:
-                with self.lobbies_lock:
-                    lobby = self.lobbies.get(lobby_code)
-                    if lobby:
-                        if lobby['host'] == client_socket or lobby['guest'] == client_socket:
-                            # Notify the other player
-                            other_socket = lobby['guest'] if lobby['host'] == client_socket else lobby['host']
-                            if other_socket:
-                                try:
-                                    leave_message = {'type': 'player_left'}
-                                    other_socket.send(json.dumps(leave_message).encode('utf-8'))
-                                except Exception:
-                                    pass
-                            del self.lobbies[lobby_code]
-                            print(f"Lobby {lobby_code} closed (client disconnected)")
+            # Find which lobby this client belongs to and clean up
+            with self.lobbies_lock:
+                # Find lobby by checking both host and guest sockets
+                found_lobby_code = None
+                for code, lobby in self.lobbies.items():
+                    if lobby['host'] == client_socket or lobby['guest'] == client_socket:
+                        found_lobby_code = code
+                        break
+                
+                if found_lobby_code:
+                    lobby = self.lobbies[found_lobby_code]
+                    if lobby['host'] == client_socket:
+                        # Host disconnected: close the lobby and notify guest
+                        if lobby['guest']:
+                            try:
+                                leave_message = {'type': 'player_left'}
+                                lobby['guest'].send(json.dumps(leave_message).encode('utf-8'))
+                            except Exception:
+                                pass
+                        del self.lobbies[found_lobby_code]
+                        print(f"Lobby {found_lobby_code} closed (host disconnected)")
+                    elif lobby['guest'] == client_socket:
+                        # Guest disconnected: just remove guest, notify host, but keep lobby open
+                        try:
+                            leave_message = {'type': 'player_left'}
+                            lobby['host'].send(json.dumps(leave_message).encode('utf-8'))
+                        except Exception:
+                            pass
+                        lobby['guest'] = None
+                        lobby['guest_name'] = None
+                        lobby['game_state'] = 'waiting'
+                        print(f"Guest left lobby {found_lobby_code}, lobby still open")
             client_socket.close()
             
     def process_message(self, message: Dict, client_socket: socket.socket) -> Optional[Dict]:
@@ -251,18 +267,27 @@ class LobbyManager:
             if lobby_code in self.lobbies:
                 lobby = self.lobbies[lobby_code]
                 
-                # Notify other player
-                other_socket = lobby['guest'] if client_socket == lobby['host'] else lobby['host']
-                if other_socket:
+                if client_socket == lobby['host']:
+                    # Host is leaving: close the lobby and notify guest
+                    if lobby['guest']:
+                        try:
+                            leave_message = {'type': 'player_left'}
+                            lobby['guest'].send(json.dumps(leave_message).encode('utf-8'))
+                        except Exception:
+                            pass
+                    del self.lobbies[lobby_code]
+                    print(f"Lobby {lobby_code} closed (host left)")
+                else:
+                    # Guest is leaving: just remove guest, notify host, but keep lobby open
                     try:
                         leave_message = {'type': 'player_left'}
-                        other_socket.send(json.dumps(leave_message).encode('utf-8'))
+                        lobby['host'].send(json.dumps(leave_message).encode('utf-8'))
                     except Exception:
                         pass
-                    
-                # Remove lobby
-                del self.lobbies[lobby_code]
-                print(f"Lobby {lobby_code} closed (leave_lobby)")
+                    lobby['guest'] = None
+                    lobby['guest_name'] = None
+                    lobby['game_state'] = 'waiting'
+                    print(f"Guest left lobby {lobby_code}, lobby still open")
             
         return {'status': 'left_lobby'}
         
