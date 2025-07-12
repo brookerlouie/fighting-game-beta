@@ -328,7 +328,7 @@ class MultiplayerClient:
             
     def create_lobby(self, player_name: str) -> Optional[str]:
         """Create a new lobby"""
-        if not self.connected:
+        if not self.connected or not self.socket:
             return None
             
         message = {
@@ -336,16 +336,25 @@ class MultiplayerClient:
             'player_name': player_name
         }
         
-        response = self.send_message(message)
-        if response and response.get('status') == 'success':
-            self.lobby_code = response.get('lobby_code')
-            self.is_host = True
-            return self.lobby_code
+        # Send message and wait for response
+        try:
+            print(f"[CLIENT] Sending: {message}")
+            self.socket.send(json.dumps(message).encode('utf-8'))
+            data = self.socket.recv(1024).decode('utf-8')
+            print(f"[CLIENT] Received: {data}")
+            response = json.loads(data) if data else None
+            
+            if response and response.get('status') == 'success':
+                self.lobby_code = response.get('lobby_code')
+                self.is_host = True
+                return self.lobby_code
+        except Exception as e:
+            print(f"Error creating lobby: {e}")
         return None
         
     def join_lobby(self, lobby_code: str, player_name: str) -> bool:
         """Join an existing lobby"""
-        if not self.connected:
+        if not self.connected or not self.socket:
             return False
             
         message = {
@@ -354,11 +363,20 @@ class MultiplayerClient:
             'player_name': player_name
         }
         
-        response = self.send_message(message)
-        if response and response.get('status') == 'success':
-            self.lobby_code = lobby_code
-            self.is_host = False
-            return True
+        # Send message and wait for response
+        try:
+            print(f"[CLIENT] Sending: {message}")
+            self.socket.send(json.dumps(message).encode('utf-8'))
+            data = self.socket.recv(1024).decode('utf-8')
+            print(f"[CLIENT] Received: {data}")
+            response = json.loads(data) if data else None
+            
+            if response and response.get('status') == 'success':
+                self.lobby_code = lobby_code
+                self.is_host = False
+                return True
+        except Exception as e:
+            print(f"Error joining lobby: {e}")
         return False
         
     def get_available_lobbies(self) -> List[Dict]:

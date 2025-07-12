@@ -408,10 +408,14 @@ class MultiplayerUI:
                     guest_name = action.get('guest_name')
                     can_start = True
                     print(f"[DEBUG] Guest joined: {guest_name}, can_start: {can_start}")
+                    print(f"[DEBUG] Action keys: {list(action.keys())}")
+                    print(f"[DEBUG] Action content: {action}")
                 elif action.get('type') == 'player_left':
                     guest_name = None
                     can_start = False
                     print(f"[DEBUG] Player left, can_start: {can_start}")
+            
+            print(f"[DEBUG] Current state - guest_name: {guest_name}, can_start: {can_start}")
             
             # Draw background
             self.screen.fill((100, 150, 255))
