@@ -401,21 +401,15 @@ class MultiplayerUI:
             
             # Check for pending actions (like guest joined)
             actions = self.client.get_pending_actions()
-            print(f"[DEBUG] Got {len(actions)} pending actions: {actions}")
             for action in actions:
-                print(f"[DEBUG] Processing action: {action}")
                 if action.get('type') == 'guest_joined':
                     guest_name = action.get('guest_name')
                     can_start = True
-                    print(f"[DEBUG] Guest joined: {guest_name}, can_start: {can_start}")
-                    print(f"[DEBUG] Action keys: {list(action.keys())}")
-                    print(f"[DEBUG] Action content: {action}")
+                    print(f"[UI] Guest joined: {guest_name}")
                 elif action.get('type') == 'player_left':
                     guest_name = None
                     can_start = False
-                    print(f"[DEBUG] Player left, can_start: {can_start}")
-            
-            print(f"[DEBUG] Current state - guest_name: {guest_name}, can_start: {can_start}")
+                    print(f"[UI] Player left")
             
             # Draw background
             self.screen.fill((100, 150, 255))
@@ -441,6 +435,11 @@ class MultiplayerUI:
                 guest_text = self.font_medium.render(f"Guest: {guest_name}", True, (0, 255, 0))
                 guest_rect = guest_text.get_rect(center=(self.width // 2, 370))
                 self.screen.blit(guest_text, guest_rect)
+            
+            # Draw debug info (temporary)
+            debug_text = self.font_small.render(f"Debug: guest_name={guest_name}, can_start={can_start}", True, (255, 0, 0))
+            debug_rect = debug_text.get_rect(center=(self.width // 2, 500))
+            self.screen.blit(debug_text, debug_rect)
             
             # Draw waiting message or start button
             if is_host:

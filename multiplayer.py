@@ -347,6 +347,7 @@ class MultiplayerClient:
             if response and response.get('status') == 'success':
                 self.lobby_code = response.get('lobby_code')
                 self.is_host = True
+                print(f"[CLIENT] Set is_host = True, lobby_code = {self.lobby_code}")
                 return self.lobby_code
         except Exception as e:
             print(f"Error creating lobby: {e}")
@@ -432,22 +433,26 @@ class MultiplayerClient:
             
     def listen_for_messages(self):
         """Listen for incoming messages from server"""
+        print(f"[CLIENT] Starting listen thread for {'host' if self.is_host else 'guest'}")
         while self.connected and self.socket:
             try:
-                print("[CLIENT] Waiting for server message...")
+                print(f"[CLIENT] Waiting for server message... (host: {self.is_host})")
                 data = self.socket.recv(1024).decode('utf-8')
                 print(f"[CLIENT] Received async: {data}")
                 if not data:
+                    print(f"[CLIENT] No data received, breaking")
                     break
                     
                 message = json.loads(data)
+                print(f"[CLIENT] Parsed message: {message}")
                 self.handle_message(message)
                 
             except Exception as e:
                 if self.connected:
-                    print(f"Error receiving message: {e}")
+                    print(f"[CLIENT] Error receiving message: {e}")
                 break
                 
+        print(f"[CLIENT] Listen thread ending for {'host' if self.is_host else 'guest'}")
         self.connected = False
         
     def handle_message(self, message: Dict):
